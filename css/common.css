@@ -1,0 +1,411 @@
+/* ==========================================================================
+   Tani.SM - Common CSS & Design System
+   Karakter: E-Commerce Pertanian Nyata, Bersih, Fungsional (Tanpa AI-Slop)
+   ========================================================================== */
+
+:root {
+  --primary-orange: #EE4D2D;
+  --primary-orange-hover: #d73211;
+  --primary-green: #2E7D32;
+  --primary-green-dark: #1B5E20;
+  --primary-green-light: #E8F5E9;
+  
+  --bg-page: #F5F5F5;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #FAFAFA;
+  
+  --border-light: #EAEAEA;
+  --border-medium: #D1D5DB;
+  --border-focus: #EE4D2D;
+  
+  --text-main: #222222;
+  --text-secondary: #595959;
+  --text-muted: #8C8C8C;
+  --text-danger: #D32F2F;
+  --text-success: #2E7D32;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 12px 0 rgba(0, 0, 0, 0.12);
+  
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  
+  --container-width: 1200px;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  line-height: 1.5;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 14px;
+}
+
+/* Container */
+.container {
+  width: 100%;
+  max-width: var(--container-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* Utilities */
+.text-orange { color: var(--primary-orange) !important; }
+.text-green { color: var(--primary-green) !important; }
+.text-muted { color: var(--text-muted) !important; }
+.text-bold { font-weight: 600; }
+.font-price { font-size: 16px; font-weight: 700; color: var(--primary-orange); }
+
+.badge {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.badge-orange {
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
+}
+
+.badge-green {
+  background-color: var(--primary-green-light);
+  color: var(--primary-green-dark);
+  border: 1px solid #A7F3D0;
+}
+
+.badge-gray {
+  background-color: #F3F4F6;
+  color: #4B5563;
+  border: 1px solid var(--border-medium);
+}
+
+.badge-blue {
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+/* Common Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background-color: var(--primary-orange);
+  color: #FFFFFF;
+  border: 1px solid var(--primary-orange);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-orange-hover);
+  border-color: var(--primary-orange-hover);
+}
+
+.btn-secondary {
+  background-color: #FFFFFF;
+  color: var(--text-main);
+  border: 1px solid var(--border-medium);
+}
+
+.btn-secondary:hover {
+  background-color: #F9FAFB;
+  border-color: #9CA3AF;
+}
+
+.btn-green {
+  background-color: var(--primary-green);
+  color: #FFFFFF;
+  border: 1px solid var(--primary-green);
+}
+
+.btn-green:hover {
+  background-color: var(--primary-green-dark);
+}
+
+.btn-outline-orange {
+  background-color: #FFF5F1;
+  color: var(--primary-orange);
+  border: 1px solid var(--primary-orange);
+}
+
+.btn-outline-orange:hover {
+  background-color: #FFEAE4;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.btn-lg {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Form Inputs */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-main);
+  margin-bottom: 5px;
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background-color: #FFFFFF;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px rgba(238, 77, 45, 0.15);
+}
+
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-box {
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 650px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.modal-close {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  color: var(--text-main);
+}
+
+.modal-body {
+  padding: 20px;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background-color: #FAFAFA;
+}
+
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background-color: #262626;
+  color: #FFFFFF;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.25s ease;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 380px;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.toast-success {
+  border-left: 4px solid var(--primary-green);
+}
+
+.toast.toast-error {
+  border-left: 4px solid #EF4444;
+}
+
+.toast.toast-info {
+  border-left: 4px solid var(--primary-orange);
+}
+
+/* Role Switcher Floating Bar (Dev/Testing Utility) */
+.role-quick-bar {
+  background-color: #1F2937;
+  color: #F3F4F6;
+  font-size: 12px;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #374151;
+}
+
+.role-quick-bar a {
+  color: #93C5FD;
+  text-decoration: underline;
+  margin-left: 8px;
+}
+
+.role-quick-bar a:hover {
+  color: #BFDBFE;
+}
+
+.role-tag {
+  background-color: #374151;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+/* ==========================================
+   PWA Install Buttons & Standalone Optimizations
+   ========================================== */
+.btn-pwa-install {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(16, 185, 129, 0.14);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.38);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btn-pwa-install:hover {
+  background: rgba(16, 185, 129, 0.26);
+  color: #FFFFFF;
+  border-color: #10B981;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-pwa-install:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+  .btn-pwa-install span {
+    display: none;
+  }
+  .btn-pwa-install {
+    padding: 6px 10px;
+  }
+}
+
+/* Standalone Mode: App installed */
+html.pwa-standalone .btn-pwa-install {
+  display: none !important;
+}

@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer TANIHUB - Pasar Sarana Pertanian & Ekosistem Digital</title>
+  
+  <!-- PWA Meta Tags & Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#04160E">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TANIHUB">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/customer.css">
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/pwa.js"></script>
+</head>
+<body>
+
+  <!-- Top Strip Quick Bar -->
+  <div class="role-quick-bar no-print" id="role-quick-bar">
+    <div>
+      <span>Portal: <strong style="color: #34D399;" id="role-tag-display">Pelanggan & Mitra Petani</strong></span>
+      <span style="margin-left: 12px; color: #5E7D6F;">Masuk sebagai: <span id="header-user-display">Petani Tani.SM</span></span>
+    </div>
+    <div id="role-action-links">
+      <a href="javascript:void(0)" id="link-logout-customer" onclick="CustomerApp.switchView('logout')" style="color: #F87171; cursor: pointer;">Keluar / Ganti Akun</a>
+    </div>
+  </div>
+
+  <div class="customer-wrapper">
+    <!-- ==========================================
+         SIDEBAR NAVIGATION (SESUAI GAMBAR REFERENSI: PELANGGAN)
+         ========================================== -->
+    <aside class="customer-sidebar no-print">
+      <!-- Brand Header -->
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon-box">
+          <img src="img/logo-tani.png" alt="Tani.SM" style="width: 32px; height: 32px; object-fit: contain;">
+        </div>
+        <div class="sidebar-brand-text">TANI.SM</div>
+      </div>
+
+      <!-- Category Label -->
+      <div class="sidebar-group-title">PELANGGAN</div>
+
+      <!-- Navigation Menu Items (Urutan Persis Sesuai Screenshot) -->
+      <nav class="customer-nav">
+        <!-- 1. Dasbor -->
+        <div class="customer-nav-item active" data-view="dasbor">
+          <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          <span>Dasbor</span>
+        </div>
+
+        <!-- 2. Katalog -->
+        <div class="customer-nav-item" data-view="catalog">
+          <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+          <span>Katalog</span>
+        </div>
+
+        <!-- 3. Keranjang -->
+        <div class="customer-nav-item" data-view="cart">
+          <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+          <span>Keranjang</span>
+          <span class="cart-badge cart-count-pill">0</span>
+        </div>
+
+        <!-- 4. Checkout -->
+        <div class="customer-nav-item" data-view="checkout">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          <span>Checkout</span>
+        </div>
+
+        <!-- 5. Pesanan -->
+        <div class="customer-nav-item" data-view="orders">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+          <span>Pesanan</span>
+        </div>
+
+        <!-- 6. Pelacakan -->
+        <div class="customer-nav-item" data-view="tracking">
+          <svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+          <span>Pelacakan</span>
+        </div>
+
+        <!-- 7. Daftar Keinginan -->
+        <div class="customer-nav-item" data-view="wishlist">
+          <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          <span>Daftar Keinginan</span>
+        </div>
+
+        <!-- 8. Ulasan -->
+        <div class="customer-nav-item" data-view="reviews">
+          <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          <span>Ulasan</span>
+        </div>
+
+        <!-- 9. Pendidikan -->
+        <div class="customer-nav-item" data-view="tips">
+          <svg viewBox="0 0 24 24"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>
+          <span>Pendidikan</span>
+        </div>
+
+        <!-- 10. Profil -->
+        <div class="customer-nav-item" data-view="profile">
+          <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          <span>Profil</span>
+        </div>
+
+        <!-- 11. Keluar (Warna merah sesuai screenshot) -->
+        <div class="customer-nav-item item-logout" data-view="logout">
+          <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+          <span>Keluar</span>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Backdrop for mobile drawer -->
+    <div id="customer-sidebar-backdrop" class="sidebar-backdrop" onclick="CustomerApp.toggleMobileSidebar(false)"></div>
+
+    <!-- ==========================================
+         MAIN CONTENT AREA
+         ========================================== -->
+    <main class="customer-main">
+      <!-- Topbar Header -->
+      <header class="customer-topbar no-print">
+        <div class="topbar-left-wrap">
+          <button type="button" class="sidebar-toggle-btn" id="customer-sidebar-toggle" onclick="CustomerApp.toggleMobileSidebar()" aria-label="Buka Menu">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+          </button>
+          
+          <div class="customer-search-wrapper">
+            <svg class="customer-search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="customer-search-input" class="customer-search-input" placeholder="Cari produk..." oninput="CustomerApp.handleGlobalSearch(event)">
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button type="button" class="btn-pwa-install no-print" id="pwa-install-header-btn" onclick="window.triggerPwaInstall()" title="Pasang Aplikasi TANIHUB di Desktop atau HP">
+            <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: currentColor;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+            <span>Pasang Aplikasi</span>
+          </button>
+
+          <div class="customer-topbar-profile">
+            <div class="customer-profile-text">
+              <div class="customer-profile-name" id="customer-top-user-name">customer</div>
+              <div class="customer-profile-role" id="customer-top-user-role">Customer</div>
+            </div>
+            <div class="customer-avatar-circle" title="Customer">
+              <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="customer-content">
+
+        <!-- ==========================================
+             1. DASBOR (IDENTIK DENGAN GAMBAR REFERENSI PELANGGAN)
+             ========================================== -->
+        <section id="view-dasbor" class="page-view active">
+          <!-- Welcome Hero Banner -->
+          <div class="hero-welcome-card">
+            <h1 class="hero-welcome-title">Selamat datang di TANIHUB 🌱</h1>
+            <p class="hero-welcome-sub">Kelola pertanian, stok, produk, pesanan, dan penjualan dalam satu ekosistem digital futuristik.</p>
+          </div>
+
+          <!-- 4 Stat Metric Cards (Baris 4 Kartu) -->
+          <div class="metrics-grid-4">
+            <!-- 1. Total Produk -->
+            <div class="metric-card-dark">
+              <div class="metric-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4 8 4 8-4zm-8 6l-7-3.5V17l7 3.5 7-3.5V9.5L12 13z"/></svg>
+              </div>
+              <div class="metric-number" id="cust-metric-products">8</div>
+              <div class="metric-tag">Total Produk</div>
+            </div>
+
+            <!-- 2. Total Stok -->
+            <div class="metric-card-dark">
+              <div class="metric-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+              </div>
+              <div class="metric-number" id="cust-metric-stock">427</div>
+              <div class="metric-tag">Total Stok</div>
+            </div>
+
+            <!-- 3. Total Pesanan -->
+            <div class="metric-card-dark">
+              <div class="metric-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+              </div>
+              <div class="metric-number" id="cust-metric-orders">0</div>
+              <div class="metric-tag">Total Pesanan</div>
+            </div>
+
+            <!-- 4. Total Penjualan / Belanja -->
+            <div class="metric-card-dark">
+              <div class="metric-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
+              </div>
+              <div class="metric-number" id="cust-metric-sales">Rp 0</div>
+              <div class="metric-tag">Total Penjualan</div>
+            </div>
+          </div>
+
+          <!-- 2 Col Activity Row (Produk Terbaru & Pesanan Terbaru) -->
+          <div class="dashboard-activity-grid">
+            <!-- Left: Produk Terbaru -->
+            <div class="activity-card">
+              <div class="activity-card-head">
+                <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4 8 4 8-4zm-8 6l-7-3.5V17l7 3.5 7-3.5V9.5L12 13z"/></svg>
+                <span>Produk Terbaru</span>
+              </div>
+              <div class="activity-list" id="cust-recent-products-list"></div>
+            </div>
+
+            <!-- Right: Pesanan Terbaru -->
+            <div class="activity-card">
+              <div class="activity-card-head">
+                <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                <span>Pesanan Terbaru</span>
+              </div>
+              <div class="activity-list" id="cust-recent-orders-list">
+                <div class="empty-state-text">Belum ada pesanan.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             2. KATALOG PRODUK (DENGAN GAMBAR TETAP ADA)
+             ========================================== -->
+        <section id="view-catalog" class="page-view">
+          <div class="catalog-layout">
+            <!-- Sidebar Filter -->
+            <aside class="catalog-sidebar-card">
+              <div class="catalog-filter-group">
+                <div class="catalog-filter-title">Kategori Komoditas</div>
+                <div id="catalog-cat-filters"></div>
+              </div>
+
+              <div class="catalog-filter-group">
+                <div class="catalog-filter-title">Rentang Harga (Rp)</div>
+                <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                  <input type="number" id="filter-price-min" class="form-input" placeholder="Min">
+                  <input type="number" id="filter-price-max" class="form-input" placeholder="Maks">
+                </div>
+                <button class="btn btn-primary btn-sm" style="width: 100%;" onclick="CustomerApp.applyPriceFilter()">Terapkan</button>
+              </div>
+
+              <div class="catalog-filter-group">
+                <div class="catalog-filter-title">Rating</div>
+                <div style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #8BA498;">
+                  <label style="cursor: pointer;"><input type="radio" name="filter-rating" onchange="CustomerApp.applyRatingFilter(5)"> ★ 5 Bintang</label>
+                  <label style="cursor: pointer;"><input type="radio" name="filter-rating" onchange="CustomerApp.applyRatingFilter(4)"> ★ 4 Bintang ke atas</label>
+                  <label style="cursor: pointer;"><input type="radio" name="filter-rating" checked onchange="CustomerApp.applyRatingFilter(null)"> Semua Rating</label>
+                </div>
+              </div>
+
+              <button class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 8px;" onclick="CustomerApp.resetCatalogFilters()">Reset Filter</button>
+            </aside>
+
+            <!-- Main Catalog Area -->
+            <div>
+              <div class="catalog-toolbar">
+                <div id="catalog-result-count" style="font-weight: 600; color: #A7C5B5;">Menampilkan produk pertanian</div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #8BA498; font-size: 12px;">Urutan:</span>
+                  <select id="catalog-sort-select" class="form-select" style="width: auto; padding: 6px 12px; font-size: 12px;" onchange="CustomerApp.setSort(this.value)">
+                    <option value="related">Paling Terkait</option>
+                    <option value="popular">Terlaris</option>
+                    <option value="price-low">Harga Terendah</option>
+                    <option value="price-high">Harga Tertinggi</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Product Grid -->
+              <div id="catalog-products-grid" class="product-grid"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             3. KERANJANG BELANJA
+             ========================================== -->
+        <section id="view-cart" class="page-view">
+          <div class="cust-card">
+            <div class="cust-card-header">
+              <span class="cust-card-title">Keranjang Belanja Petani</span>
+            </div>
+            <div class="cust-card-body">
+              <div style="display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start;">
+                <div id="cart-items-container" class="table-responsive"></div>
+
+                <div class="cust-card" style="margin-bottom: 0;">
+                  <div class="cust-card-header">
+                    <span class="cust-card-title">Ringkasan Belanja</span>
+                  </div>
+                  <div class="cust-card-body">
+                    <div class="form-group">
+                      <label class="form-label">Kupon Subsidi Tani:</label>
+                      <div style="display: flex; gap: 6px;">
+                        <input type="text" id="voucher-code-input" class="form-input" placeholder="PANENRAYA" style="text-transform: uppercase;">
+                        <button class="btn btn-secondary btn-sm" onclick="CustomerApp.applyVoucherCode()">Terapkan</button>
+                      </div>
+                      <div style="font-size: 11px; color: #8BA498; margin-top: 4px;">Kupon aktif: PANENRAYA (15%), SUBSIDIPUPUK</div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                      <span>Subtotal Produk:</span>
+                      <span id="cart-subtotal-val" style="font-weight: 600;">Rp 0</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                      <span>Estimasi Bobot Kargo:</span>
+                      <span id="cart-weight-val" style="font-weight: 600;">0 Kg</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px; color: #34D399;">
+                      <span>Potongan Kupon:</span>
+                      <span id="cart-discount-val" style="font-weight: 600;">Rp 0</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--cust-border-subtle); margin-bottom: 18px;">
+                      <span style="font-weight: 700; font-size: 15px;">Total Perkiraan:</span>
+                      <span id="cart-total-val" style="font-size: 18px; font-weight: 800; color: #10B981;">Rp 0</span>
+                    </div>
+
+                    <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="CustomerApp.switchView('checkout')">
+                      Lanjut ke Checkout &rarr;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             4. CHECKOUT
+             ========================================== -->
+        <section id="view-checkout" class="page-view">
+          <div class="cust-card">
+            <div class="cust-card-header">
+              <span class="cust-card-title">Konfirmasi Pesanan & Ekspedisi Kargo</span>
+            </div>
+            <div class="cust-card-body">
+              <div style="display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start;">
+                <div>
+                  <!-- Alamat Tujuan -->
+                  <div class="cust-card" style="margin-bottom: 16px;">
+                    <div class="cust-card-header">
+                      <span class="cust-card-title">1. Alamat Pengiriman Lahan / Kebun</span>
+                    </div>
+                    <div class="cust-card-body">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                          <label class="form-label">Nama Penerima / Kontak:</label>
+                          <input type="text" id="checkout-customer-name" class="form-input" value="Budi Santoso">
+                        </div>
+                        <div>
+                          <label class="form-label">Nomor WhatsApp Aktif:</label>
+                          <input type="text" id="checkout-customer-phone" class="form-input" value="0812-3456-7890">
+                        </div>
+                      </div>
+                      <div>
+                        <label class="form-label">Alamat Lengkap Lahan (Desa, RT/RW, Patokan):</label>
+                        <textarea id="checkout-address-text" class="form-textarea" rows="2">Dusun Jetis RT 03/RW 02, Desa Ceper, Kec. Ceper, Kab. Klaten, Jawa Tengah 57465</textarea>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Ekspedisi Kargo -->
+                  <div class="cust-card" style="margin-bottom: 16px;">
+                    <div class="cust-card-header">
+                      <span class="cust-card-title">2. Pilih Ekspedisi Kargo Pertanian</span>
+                    </div>
+                    <div class="cust-card-body">
+                      <label class="checkout-radio-card active">
+                        <div>
+                          <input type="radio" name="checkout-courier" value="J&T Cargo Pertanian" data-rate="25000" checked onchange="CustomerApp.updateCheckoutCalculations()">
+                          <strong style="margin-left: 8px;">J&T Cargo Pertanian (Jalur Darat & Truk Karungan)</strong>
+                          <div style="font-size: 11px; color: #8BA498; margin-left: 24px;">Spesialis muatan karung benih, pupuk, dan mesin (2-3 hari)</div>
+                        </div>
+                        <span style="font-weight: 600; color: #34D399;">Tarif Standar</span>
+                      </label>
+
+                      <label class="checkout-radio-card">
+                        <div>
+                          <input type="radio" name="checkout-courier" value="SiCepat Cargo Muatan" data-rate="30000" onchange="CustomerApp.updateCheckoutCalculations()">
+                          <strong style="margin-left: 8px;">SiCepat Cargo Muatan Cepat</strong>
+                          <div style="font-size: 11px; color: #8BA498; margin-left: 24px;">Pengiriman prioritas antar propinsi (1-2 hari kerja)</div>
+                        </div>
+                        <span style="font-weight: 600; color: #34D399;">Tarif Cepat</span>
+                      </label>
+
+                      <label class="checkout-radio-card">
+                        <div>
+                          <input type="radio" name="checkout-courier" value="Armada Pick-up Tani Mandiri" data-rate="15000" onchange="CustomerApp.updateCheckoutCalculations()">
+                          <strong style="margin-left: 8px;">Armada Pick-up Tani Mandiri (Wilayah Sekitar Gudang)</strong>
+                          <div style="font-size: 11px; color: #8BA498; margin-left: 24px;">Diantar langsung armada pick-up sampai ke pematang kebun</div>
+                        </div>
+                        <span style="font-weight: 600; color: #34D399;">Tarif Lokal</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Metode Pembayaran -->
+                  <div class="cust-card">
+                    <div class="cust-card-header">
+                      <span class="cust-card-title">3. Metode Pembayaran</span>
+                    </div>
+                    <div class="cust-card-body">
+                      <label class="checkout-radio-card active">
+                        <div>
+                          <input type="radio" name="checkout-payment" value="Transfer Mandiri (Virtual Account)" checked>
+                          <strong style="margin-left: 8px;">Transfer Bank Mandiri (Virtual Account Otomatis)</strong>
+                        </div>
+                        <span class="badge badge-green">Otomatis</span>
+                      </label>
+
+                      <label class="checkout-radio-card">
+                        <div>
+                          <input type="radio" name="checkout-payment" value="Transfer BRI Manual">
+                          <strong style="margin-left: 8px;">Transfer Bank BRI (Bank Rakyat Indonesia)</strong>
+                        </div>
+                        <span class="badge badge-green">Mitra Petani</span>
+                      </label>
+
+                      <label class="checkout-radio-card">
+                        <div>
+                          <input type="radio" name="checkout-payment" value="QRIS Pertanian Nasional">
+                          <strong style="margin-left: 8px;">QRIS Semua Bank / Dompet Digital</strong>
+                        </div>
+                        <span class="badge badge-green">Instan</span>
+                      </label>
+
+                      <label class="checkout-radio-card">
+                        <div>
+                          <input type="radio" name="checkout-payment" value="Bayar di Tempat (COD Tani)">
+                          <strong style="margin-left: 8px;">COD Tani (Bayar Tunai ke Supir Saat Tiba)</strong>
+                        </div>
+                        <span class="badge badge-orange">Maks Rp1jt</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Ringkasan Checkout -->
+                <div class="cust-card">
+                  <div class="cust-card-header">
+                    <span class="cust-card-title">Rincian Tagihan</span>
+                  </div>
+                  <div class="cust-card-body">
+                    <div id="checkout-items-list" style="margin-bottom: 16px; max-height: 200px; overflow-y: auto;"></div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                      <span>Subtotal Belanja:</span>
+                      <span id="checkout-subtotal-val" style="font-weight: 600;">Rp 0</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px;">
+                      <span>Ongkos Kirim Kargo:</span>
+                      <span id="checkout-shipping-val" style="font-weight: 600;">Rp 0</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px; color: #34D399;">
+                      <span>Diskon Kupon:</span>
+                      <span id="checkout-discount-val" style="font-weight: 600;">Rp 0</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--cust-border-subtle); margin-bottom: 18px;">
+                      <span style="font-weight: 700; font-size: 15px;">Total Tagihan:</span>
+                      <span id="checkout-total-val" style="font-size: 18px; font-weight: 800; color: #10B981;">Rp 0</span>
+                    </div>
+
+                    <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="CustomerApp.submitOrder()">
+                      Buat Pesanan Sekarang
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             5. PESANAN SAYA
+             ========================================== -->
+        <section id="view-orders" class="page-view">
+          <div class="cust-card">
+            <div class="cust-card-header">
+              <span class="cust-card-title">Riwayat Pemesanan Sarana Pertanian</span>
+            </div>
+            <div class="cust-card-body">
+              <div id="orders-list-container"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             6. PELACAKAN RESI
+             ========================================== -->
+        <section id="view-tracking" class="page-view">
+          <div class="cust-card">
+            <div class="cust-card-header">
+              <span class="cust-card-title">Lacak Pengiriman Kargo Pertanian</span>
+            </div>
+            <div class="cust-card-body">
+              <div class="form-group" style="max-width: 500px; margin-bottom: 20px;">
+                <label class="form-label">Masukkan Nomor Resi / No. Pesanan:</label>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="tracking-input" class="form-input" placeholder="Contoh: ORD-1001 atau JTC-ID-992019">
+                  <button class="btn btn-primary" onclick="CustomerApp.searchTracking()">Lacak</button>
+                </div>
+              </div>
+              <div id="tracking-result-container"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             7. DAFTAR KEINGINAN (WISHLIST)
+             ========================================== -->
+        <section id="view-wishlist" class="page-view">
+          <div class="cust-card">
+            <div class="cust-card-header">
+              <span class="cust-card-title">Daftar Keinginan Sarana Produksi Tani</span>
+            </div>
+            <div class="cust-card-body">
+              <div id="wishlist-products-grid" class="product-grid"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             8. ULASAN
+             ========================================== -->
+        <section id="view-reviews" class="page-view">
+          <div class="cust-card">
+            <div class="cust-card-header">
+              <span class="cust-card-title">Ulasan & Testimoni Petani Mitra</span>
+              <button class="btn btn-primary btn-sm" onclick="CustomerApp.openAddReviewModal()">+ Tulis Ulasan</button>
+            </div>
+            <div class="cust-card-body">
+              <div id="reviews-list-container"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             9. PENDIDIKAN (TIPS & PANDUAN AGRONOMI)
+             ========================================== -->
+        <section id="view-tips" class="page-view">
+          <div class="cust-card">
+            <div class="cust-card-header">
+              <span class="cust-card-title">Pendidikan Agronomi & Panduan Musim Tanam</span>
+            </div>
+            <div class="cust-card-body">
+              <div id="tips-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px;"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             10. PROFIL PETANI
+             ========================================== -->
+        <section id="view-profile" class="page-view">
+          <div class="cust-card">
+            <div class="cust-card-header">
+              <span class="cust-card-title">Profil Petani & Data Lahan</span>
+            </div>
+            <div class="cust-card-body" style="max-width: 600px;">
+              <form id="form-customer-profile" onsubmit="CustomerApp.saveProfile(event)">
+                <div class="form-group">
+                  <label class="form-label">Nama Lengkap Petani / Pembeli:</label>
+                  <input type="text" id="prof-name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Nomor WhatsApp Aktif:</label>
+                  <input type="text" id="prof-phone" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email:</label>
+                  <input type="email" id="prof-email" class="form-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Nama Kelompok Tani (Poktan):</label>
+                  <input type="text" id="prof-poktan" class="form-input">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                  <div class="form-group">
+                    <label class="form-label">Luas Lahan (Hektar):</label>
+                    <input type="number" step="0.1" id="prof-lahan" class="form-input">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Komoditas Utama:</label>
+                    <input type="text" id="prof-komoditas" class="form-input">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Alamat Lengkap Pengiriman Lahan:</label>
+                  <textarea id="prof-address" class="form-textarea" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Simpan Pembaruan Profil</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Bottom Netlify Badge Sesuai Screenshot -->
+  <div class="netlify-badge no-print">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 2L3 7v10l9 5 9-5V7l-9-5zm0 2.2l6.8 3.8-3.4 1.9-6.8-3.8L12 4.2zm-7.6 4.6l6.8 3.8v7.6l-6.8-3.8V8.8zm8.4 11.4v-7.6l6.8-3.8v7.6l-6.8 3.8z"/>
+    </svg>
+    <span>Powered by <strong>Netlify</strong></span>
+  </div>
+
+  <!-- ==========================================
+       MODALS FOR CUSTOMER
+       ========================================== -->
+
+  <!-- Modal: Product Detail -->
+  <div id="modal-product-detail" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 id="modal-detail-name" class="modal-title">Rincian Sarana Tani</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body" id="modal-detail-content"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Tutup</button>
+        <button id="modal-detail-btn-cart" class="btn btn-primary">Tambah ke Keranjang</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Order Success -->
+  <div id="modal-order-success" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 520px; text-align: center;">
+      <div class="modal-header" style="border-bottom: none;">
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(16, 185, 129, 0.2); color: #10B981; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px auto;">✓</div>
+        <h3 style="font-size: 20px; font-weight: 700; color: #ECFDF5; margin-bottom: 8px;">Pesanan Berhasil Dibuat!</h3>
+        <p style="font-size: 13px; color: #8BA498; margin-bottom: 16px;">
+          Nomor Pesanan: <strong id="success-order-id" style="color: #34D399;"></strong>
+        </p>
+        <div id="success-order-instructions" style="background: #04160E; border: 1px solid var(--cust-border-subtle); padding: 14px; border-radius: 8px; font-size: 12px; color: #ECFDF5; text-align: left; line-height: 1.6; margin-bottom: 18px;"></div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button class="btn btn-secondary" onclick="CustomerApp.closeAllModals(); CustomerApp.switchView('orders');">Lihat Pesanan Saya</button>
+          <button class="btn btn-primary" onclick="CustomerApp.closeAllModals(); CustomerApp.switchView('catalog');">Lanjut Belanja</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add Review -->
+  <div id="modal-add-review" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Tulis Ulasan & Pengalaman di Lahan</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Pilih Produk Pertanian:</label>
+          <select id="review-product-select" class="form-select"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rating Kepuasan:</label>
+          <select id="review-rating-select" class="form-select">
+            <option value="5">★★★★★ (5 Bintang - Sangat Memuaskan)</option>
+            <option value="4">★★★★☆ (4 Bintang - Bagus & Efektif)</option>
+            <option value="3">★★★☆☆ (3 Bintang - Cukup)</option>
+            <option value="2">★★☆☆☆ (2 Bintang - Kurang Puas)</option>
+            <option value="1">★☆☆☆☆ (1 Bintang - Mengecewakan)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ulasan / Testimoni Hasil Tanaman:</label>
+          <textarea id="review-comment-input" class="form-textarea" rows="3" placeholder="Ceritakan hasil aplikasi di lahan, pertumbuhan tanaman, dsb."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Batal</button>
+        <button class="btn btn-primary" onclick="CustomerApp.submitReview()">Kirim Ulasan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Tip Detail -->
+  <div id="modal-tip-detail" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 640px;">
+      <div class="modal-header">
+        <h3 id="modal-tip-title" class="modal-title">Panduan Agronomi</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body" id="modal-tip-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="no-print"></div>
+
+  <!-- Scripts -->
+  <script src="js/customer.js"></script>
+</body>
+</html>

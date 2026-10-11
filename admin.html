@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin TANIHUB - Panel Manajemen Ekosistem Digital Pertanian</title>
+
+  <!-- PWA Meta Tags & Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#04160E">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TANIHUB">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/print.css">
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/pwa.js"></script>
+  <script>
+    // Permission Guard: Customer TIDAK BISA mengakses admin.html
+    if (!TaniAuth.requireAdminAccess()) {
+      document.write('<style>body{display:none;}</style>');
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Top Strip Quick Bar -->
+  <div class="role-quick-bar no-print">
+    <div>
+      <span>Portal: <strong style="color: #34D399;">Administrator Gudang & Distribusi</strong></span>
+      <span style="margin-left: 12px; color: #5E7D6F;">Gudang Pusat Klaten</span>
+    </div>
+    <div>
+      <a href="index.html">Beralih ke Portal Pembeli / Petani &rarr;</a>
+      <span style="color: #374151; margin: 0 8px;">|</span>
+      <a href="javascript:void(0)" onclick="AdminApp.logout()" style="color: #F87171; cursor: pointer;">Keluar</a>
+    </div>
+  </div>
+
+  <div class="admin-wrapper">
+    <!-- ==========================================
+         SIDEBAR NAVIGATION (SESUAI GAMBAR REFERENSI)
+         ========================================== -->
+    <aside class="admin-sidebar no-print">
+      <!-- Brand Header -->
+      <div class="admin-brand">
+        <div class="admin-brand-icon-box">
+          <img src="img/logo-tani.png" alt="Tani.SM" style="width: 32px; height: 32px; object-fit: contain;">
+        </div>
+        <div class="admin-brand-text">TANI.SM</div>
+      </div>
+
+      <!-- Category Label -->
+      <div class="nav-group-title">ADMIN</div>
+
+      <!-- Navigation Menu Items (Urutan Persis Sesuai Screenshot) -->
+      <nav class="admin-nav">
+        <!-- 1. Dasbor -->
+        <div class="admin-nav-item active" data-view="dasbor">
+          <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          <span>Dasbor</span>
+        </div>
+
+        <!-- 2. Pelanggan -->
+        <div class="admin-nav-item" data-view="pelanggan">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 3s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          <span>Pelanggan</span>
+        </div>
+
+        <!-- 3. Produk -->
+        <div class="admin-nav-item" data-view="produk">
+          <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4 8 4 8-4zm-8 6l-7-3.5V17l7 3.5 7-3.5V9.5L12 13z"/></svg>
+          <span>Produk</span>
+        </div>
+
+        <!-- 4. Kategori -->
+        <div class="admin-nav-item" data-view="kategori">
+          <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+          <span>Kategori</span>
+        </div>
+
+        <!-- 5. Stok -->
+        <div class="admin-nav-item" data-view="stok">
+          <svg viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+          <span>Stok</span>
+        </div>
+
+        <!-- 6. Pemesanan -->
+        <div class="admin-nav-item" data-view="pemesanan">
+          <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+          <span>Pemesanan</span>
+        </div>
+
+        <!-- 7. Pembayaran -->
+        <div class="admin-nav-item" data-view="pembayaran">
+          <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+          <span>Pembayaran</span>
+        </div>
+
+        <!-- 8. Pengiriman -->
+        <div class="admin-nav-item" data-view="pengiriman">
+          <svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+          <span>Pengiriman</span>
+        </div>
+
+        <!-- 9. Konten -->
+        <div class="admin-nav-item" data-view="konten">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+          <span>Konten</span>
+        </div>
+
+        <!-- 10. Promo -->
+        <div class="admin-nav-item" data-view="promo">
+          <svg viewBox="0 0 24 24"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
+          <span>Promo</span>
+        </div>
+
+        <!-- 11. Laporan -->
+        <div class="admin-nav-item" data-view="laporan">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+          <span>Laporan</span>
+        </div>
+      </nav>
+
+      <!-- User Info Footer -->
+      <div class="admin-user-footer">
+        <div class="admin-user-footer-info">
+          <div class="admin-user-name" id="admin-sidebar-user-name">admin</div>
+          <div class="admin-user-role">Administrator</div>
+        </div>
+        <a href="javascript:void(0)" onclick="AdminApp.logout()" title="Keluar dari Panel Admin" style="color: #F87171; font-size: 11px; text-decoration: none; cursor: pointer;">Keluar</a>
+      </div>
+    </aside>
+
+    <!-- Backdrop for mobile drawer -->
+    <div id="admin-sidebar-backdrop" class="sidebar-backdrop" onclick="AdminApp.toggleMobileSidebar(false)"></div>
+
+    <!-- ==========================================
+         MAIN CONTENT AREA
+         ========================================== -->
+    <main class="admin-main">
+      <!-- Topbar Header (Search bar, toggle & User profile) -->
+      <header class="admin-topbar no-print">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button type="button" class="sidebar-toggle-btn" id="admin-sidebar-toggle" onclick="AdminApp.toggleMobileSidebar()" aria-label="Buka Menu">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: currentColor;"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+          </button>
+        </div>
+
+        <div class="admin-search-wrapper">
+          <svg class="admin-search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" id="admin-global-search" class="admin-search-input" placeholder="Cari produk..." oninput="AdminApp.handleGlobalSearch(event)">
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button type="button" class="btn-pwa-install no-print" id="pwa-install-header-btn-admin" onclick="window.triggerPwaInstall()" title="Pasang Aplikasi TANIHUB di Desktop atau HP">
+            <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: currentColor;"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+            <span>Pasang Aplikasi</span>
+          </button>
+
+          <div class="admin-topbar-profile">
+            <div class="admin-profile-text">
+              <div class="admin-profile-name" id="admin-top-user-name">admin</div>
+              <div class="admin-profile-role">Administrator</div>
+            </div>
+            <div class="admin-avatar-circle" title="Administrator">
+              <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            </div>
+            <a href="index.html" class="btn btn-secondary btn-sm" style="margin-left: 8px;">Portal Petani &rarr;</a>
+          </div>
+        </div>
+      </header>
+
+      <div class="admin-content">
+
+        <!-- ==========================================
+             1. DASBOR (IDENTIK DENGAN GAMBAR REFERENSI)
+             ========================================== -->
+        <section id="admin-view-dasbor" class="admin-view active">
+          <!-- Welcome Hero Banner -->
+          <div class="hero-welcome-card">
+            <h1 class="hero-welcome-title">Selamat datang di TANIHUB 🌱</h1>
+            <p class="hero-welcome-sub">Kelola pertanian, stok, produk, pesanan, dan penjualan dalam satu ekosistem digital futuristik.</p>
+          </div>
+
+          <!-- 4 Stat Metric Cards (Baris 4 Kartu) -->
+          <div class="metrics-grid-4">
+            <!-- 1. Total Produk -->
+            <div class="metric-card-dark">
+              <div class="metric-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4 8 4 8-4zm-8 6l-7-3.5V17l7 3.5 7-3.5V9.5L12 13z"/></svg>
+              </div>
+              <div class="metric-number" id="dash-metric-products">8</div>
+              <div class="metric-tag">Total Produk</div>
+            </div>
+
+            <!-- 2. Total Stok -->
+            <div class="metric-card-dark">
+              <div class="metric-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+              </div>
+              <div class="metric-number" id="dash-metric-stock">427</div>
+              <div class="metric-tag">Total Stok</div>
+            </div>
+
+            <!-- 3. Total Pesanan -->
+            <div class="metric-card-dark">
+              <div class="metric-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+              </div>
+              <div class="metric-number" id="dash-metric-orders">0</div>
+              <div class="metric-tag">Total Pesanan</div>
+            </div>
+
+            <!-- 4. Total Penjualan -->
+            <div class="metric-card-dark">
+              <div class="metric-icon-wrap">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14h-2v-2h2v2zm0-4h-2V7h2v5z"/></svg>
+              </div>
+              <div class="metric-number" id="dash-metric-sales">Rp 0</div>
+              <div class="metric-tag">Total Penjualan</div>
+            </div>
+          </div>
+
+          <!-- 2 Col Activity Row (Produk Terbaru & Pesanan Terbaru) -->
+          <div class="dashboard-activity-grid">
+            <!-- Left: Produk Terbaru -->
+            <div class="activity-card">
+              <div class="activity-card-head">
+                <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4 8 4 8-4zm-8 6l-7-3.5V17l7 3.5 7-3.5V9.5L12 13z"/></svg>
+                <span>Produk Terbaru</span>
+              </div>
+              <div class="activity-list" id="dash-recent-products-list"></div>
+            </div>
+
+            <!-- Right: Pesanan Terbaru -->
+            <div class="activity-card">
+              <div class="activity-card-head">
+                <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                <span>Pesanan Terbaru</span>
+              </div>
+              <div class="activity-list" id="dash-recent-orders-list">
+                <div class="empty-state-text">Belum ada pesanan.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             2. PELANGGAN
+             ========================================== -->
+        <section id="admin-view-pelanggan" class="admin-view">
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title">Data Petani & Pelanggan Terdaftar</span>
+              <div class="admin-card-actions">
+                <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddCustomerModal()">+ Tambah Data Petani</button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Nama Petani / Kelompok Tani</th>
+                    <th>No. Telepon / WA</th>
+                    <th>Alamat Pengiriman Lahan</th>
+                    <th>Lahan & Komoditas</th>
+                    <th>Total Belanja</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-pelanggan-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             3. PRODUK (MASTER PRODUK LENGKAP DENGAN GAMBAR)
+             ========================================== -->
+        <section id="admin-view-produk" class="admin-view">
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title">Master Data Produk & Sarana Pertanian</span>
+              <div class="admin-card-actions">
+                <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddProductModal()">+ Tambah Produk Baru</button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Foto</th>
+                    <th>Nama Produk & Lokasi Rak</th>
+                    <th>Kategori</th>
+                    <th>Harga & Satuan</th>
+                    <th>Stok Fisik</th>
+                    <th>Penjualan</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-produk-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             4. KATEGORI
+             ========================================== -->
+        <section id="admin-view-kategori" class="admin-view">
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title">Master Kategori Komoditas & Saprotan</span>
+              <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddKategoriModal()">+ Tambah Kategori</button>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID Kategori</th>
+                    <th>Nama Kategori</th>
+                    <th>Keterangan / Deskripsi</th>
+                    <th>Jumlah Produk</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-kategori-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             5. KONTROL STOK
+             ========================================== -->
+        <section id="admin-view-stok" class="admin-view">
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title">Status Stok Fisik Pergudangan TANIHUB</span>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID SKU</th>
+                    <th>Nama Barang Pertanian</th>
+                    <th>Lokasi Rak / Gudang</th>
+                    <th>Stok Tersedia</th>
+                    <th>Batas Minimum</th>
+                    <th>Status Mutu</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-stok-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Stock Movement Logs -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title">Log Riwayat Mutasi Stok Masuk / Keluar (Audit Trail)</span>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Waktu Catat</th>
+                    <th>Nama Barang</th>
+                    <th>Jenis Mutasi</th>
+                    <th>Kuantitas</th>
+                    <th>Sisa Saldo</th>
+                    <th>Keterangan / Referensi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-stok-logs-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             6. PEMESANAN
+             ========================================== -->
+        <section id="admin-view-pemesanan" class="admin-view">
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title">Daftar Pemesanan Masuk Petani</span>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>No. Pesanan</th>
+                    <th>Pemesan</th>
+                    <th>Waktu Pesan</th>
+                    <th>Total Biaya</th>
+                    <th>Status Bayar</th>
+                    <th>Status Gudang</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-pemesanan-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             7. PEMBAYARAN
+             ========================================== -->
+        <section id="admin-view-pembayaran" class="admin-view">
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title">Verifikasi Bukti Transfer & Status Rekening</span>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>No. Pesanan</th>
+                    <th>Nama Pembayar</th>
+                    <th>Metode Pembayaran</th>
+                    <th>Jumlah Tagihan</th>
+                    <th>Status Verifikasi</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-pembayaran-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             8. PENGIRIMAN
+             ========================================== -->
+        <section id="admin-view-pengiriman" class="admin-view">
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title">Manajemen Logistik, Ekspedisi & Resi Kargo</span>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>No. Pesanan</th>
+                    <th>Penerima</th>
+                    <th>Ekspedisi</th>
+                    <th>Nomor Resi / Surat Jalan</th>
+                    <th>Status Pengiriman</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-pengiriman-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             9. KONTEN & TIPS
+             ========================================== -->
+        <section id="admin-view-konten" class="admin-view">
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title">Manajemen Artikel Edukasi Agronomi & Tips Tani</span>
+              <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddTipModal()">+ Tulis Tips Baru</button>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Judul Tips Pertanian</th>
+                    <th>Kategori</th>
+                    <th>Penulis / Agronomis</th>
+                    <th>Tanggal Terbit</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-konten-tips-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             10. PROMO & KUPON
+             ========================================== -->
+        <section id="admin-view-promo" class="admin-view">
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title">Kupon Subsidi & Promosi Musim Tanam</span>
+              <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddPromoModal()">+ Buat Kupon Baru</button>
+            </div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Kode Kupon</th>
+                    <th>Nama Program Promo</th>
+                    <th>Besaran Diskon</th>
+                    <th>Min. Belanja</th>
+                    <th>Terpakai / Kuota</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-promo-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==========================================
+             11. LAPORAN (CETAK & PRINT PDF)
+             ========================================== -->
+        <section id="admin-view-laporan" class="admin-view">
+          <div class="admin-card no-print">
+            <div class="admin-card-header">
+              <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <label style="font-weight: 600; font-size: 13px; color: #A3BDB0;">Jenis Laporan:</label>
+                <select id="report-type-select" class="form-select" style="width: auto;" onchange="AdminApp.renderLaporan()">
+                  <option value="sales">Laporan Rekapitulasi Penjualan & Pendapatan</option>
+                  <option value="stock">Laporan Stock Opname Fisik & Valuasi Aset</option>
+                </select>
+
+                <label style="font-weight: 600; font-size: 13px; margin-left: 10px; color: #A3BDB0;">Periode:</label>
+                <select id="report-period-select" class="form-select" style="width: auto;" onchange="AdminApp.renderLaporan()">
+                  <option value="all">Semua Waktu Operasional</option>
+                  <option value="month">Bulan Ini (Oktober 2026)</option>
+                </select>
+              </div>
+
+              <div class="admin-card-actions">
+                <button class="btn btn-primary" onclick="AdminApp.printReport()">
+                  Cetak Laporan / Simpan PDF
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="report-document-container"></div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Bottom Netlify Badge Sesuai Screenshot -->
+  <div class="netlify-badge no-print">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 2L3 7v10l9 5 9-5V7l-9-5zm0 2.2l6.8 3.8-3.4 1.9-6.8-3.8L12 4.2zm-7.6 4.6l6.8 3.8v7.6l-6.8-3.8V8.8zm8.4 11.4v-7.6l6.8-3.8v7.6l-6.8 3.8z"/>
+    </svg>
+    <span>Powered by <strong>Netlify</strong></span>
+  </div>
+
+  <!-- ==========================================
+       MODALS FOR ADMIN
+       ========================================== -->
+
+  <!-- Modal: Add/Edit Product -->
+  <div id="modal-add-product" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3 id="product-modal-title" class="modal-title">Tambah Produk Baru</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="form-product-id">
+        <div class="form-group">
+          <label class="form-label">Nama Produk Lengkap:</label>
+          <input type="text" id="form-product-name" class="form-input" placeholder="Contoh: Benih Padi Ciherang Super Label Biru">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Kategori Komoditas:</label>
+            <select id="form-product-cat" class="form-select"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Lokasi Rak / Palet Gudang:</label>
+            <input type="text" id="form-product-shelf" class="form-input" placeholder="Contoh: Rak A-02">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Harga Jual (Rp):</label>
+            <input type="number" id="form-product-price" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Harga Asli Sebelum Coret (Opsional):</label>
+            <input type="number" id="form-product-original-price" class="form-input">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Jumlah Stok:</label>
+            <input type="number" id="form-product-stock" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Satuan Kemasan:</label>
+            <input type="text" id="form-product-unit" class="form-input" placeholder="Karung 5 Kg / 1 Unit">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bobot (Gram):</label>
+            <input type="number" id="form-product-weight" class="form-input" value="1000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bahan Aktif / Spesifikasi Teknis:</label>
+          <input type="text" id="form-product-active-ing" class="form-input" placeholder="Contoh: Kemurnian 99%, NPK 16-16-16, dsb.">
+        </div>
+        <div class="form-group">
+          <label class="form-label">URL Foto Produk (Gambar Tetap Tersedia):</label>
+          <input type="text" id="form-product-image" class="form-input" placeholder="https://images.unsplash.com/...">
+          <div style="margin-top: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <input type="file" id="form-product-image-file" accept="image/*" style="display:none;" onchange="AdminApp.handleProductImageFile(event)">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('form-product-image-file').click()">Pilih File Gambar</button>
+            <span id="form-product-image-filename" style="font-size: 12px; color: #8BA498;">Belum ada file dipilih</span>
+          </div>
+          <img id="form-product-image-preview" src="" alt="Pratinjau Foto" style="display:none; margin-top: 8px; max-width: 120px; max-height: 120px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); object-fit: cover;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deskripsi & Panduan Penggunaan:</label>
+          <textarea id="form-product-desc" class="form-textarea" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Batal</button>
+        <button class="btn btn-primary" onclick="AdminApp.saveProductForm()">Simpan Produk</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add/Edit Customer -->
+  <div id="modal-add-customer" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 550px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Form Data Petani / Pelanggan</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="form-customer-id">
+        <div class="form-group">
+          <label class="form-label">Nama Petani / Pembeli:</label>
+          <input type="text" id="form-customer-name" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">No. Telepon / WhatsApp:</label>
+          <input type="text" id="form-customer-phone" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nama Kelompok Tani (Poktan):</label>
+          <input type="text" id="form-customer-poktan" class="form-input">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Luas Lahan (Ha):</label>
+            <input type="number" step="0.1" id="form-customer-lahan" class="form-input" value="1.0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Komoditas Utama:</label>
+            <input type="text" id="form-customer-komoditas" class="form-input" placeholder="Contoh: Padi, Cabai">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Alamat Lengkap Lahan:</label>
+          <textarea id="form-customer-address" class="form-textarea" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Batal</button>
+        <button class="btn btn-primary" onclick="AdminApp.saveCustomerForm()">Simpan Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add/Edit Category -->
+  <div id="modal-add-kategori" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Kategori Sarana & Hasil Tani</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="form-kategori-id">
+        <div class="form-group">
+          <label class="form-label">Nama Kategori:</label>
+          <input type="text" id="form-kategori-name" class="form-input" placeholder="Contoh: Benih Sayuran" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Keterangan / Deskripsi:</label>
+          <textarea id="form-kategori-desc" class="form-textarea" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Batal</button>
+        <button class="btn btn-primary" onclick="AdminApp.saveKategoriForm()">Simpan Kategori</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Stock Adjust -->
+  <div id="modal-stock-adjust" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Penyesuaian / Mutasi Stok Gudang</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="stock-adjust-prod-id">
+        <div style="font-weight: 600; font-size: 14px; margin-bottom: 4px; color: #ECFDF5;" id="stock-adjust-prod-name"></div>
+        <div style="font-size: 12px; color: #8BA498; margin-bottom: 14px;">Stok Saat Ini: <strong id="stock-adjust-current" style="color: #34D399;"></strong></div>
+
+        <div class="form-group">
+          <label class="form-label">Jenis Mutasi:</label>
+          <select id="stock-adjust-type" class="form-select">
+            <option value="Masuk">Stok Masuk (Penerimaan Pabrik / Supplier)</option>
+            <option value="Keluar">Stok Keluar (Retur Rusak / Pengurangan Manual)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Jumlah Unit Perubahan:</label>
+          <input type="number" id="stock-adjust-qty" class="form-input" min="1" placeholder="10">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Keterangan / Referensi:</label>
+          <textarea id="stock-adjust-note" class="form-textarea" rows="2" placeholder="Contoh: Penerimaan Truk Distributor PT Petrokimia"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Batal</button>
+        <button class="btn btn-primary" onclick="AdminApp.submitStockAdjust()">Simpan Mutasi</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Order Status -->
+  <div id="modal-order-status" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Ubah Status Pemesanan</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="order-status-id">
+        <div style="font-weight: 600; font-size: 14px; margin-bottom: 12px; color: #ECFDF5;" id="order-status-display"></div>
+
+        <div class="form-group">
+          <label class="form-label">Status Baru:</label>
+          <select id="order-status-select" class="form-select">
+            <option value="Menunggu Pembayaran">Menunggu Pembayaran</option>
+            <option value="Diproses Gudang">Diproses Gudang (Packing Karung)</option>
+            <option value="Dikirim">Dikirim (Diangkut Kargo / Pick-up)</option>
+            <option value="Selesai">Selesai (Telah Diterima Petani)</option>
+            <option value="Dibatalkan">Dibatalkan</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Catatan Tambahan untuk Petani:</label>
+          <textarea id="order-status-note" class="form-textarea" rows="2" placeholder="Contoh: Barang telah dimasukkan ke armada logistik"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Batal</button>
+        <button class="btn btn-primary" onclick="AdminApp.saveOrderStatus()">Perbarui Status</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Update Resi Logistik -->
+  <div id="modal-update-resi" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Input Resi & Logistik Pengiriman</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="resi-order-id">
+        <div style="font-weight: 600; font-size: 14px; margin-bottom: 12px; color: #ECFDF5;" id="resi-order-display"></div>
+
+        <div class="form-group">
+          <label class="form-label">Nomor Resi / Surat Jalan Kargo:</label>
+          <input type="text" id="resi-number-input" class="form-input" placeholder="JTC-ID-992019">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Posisi / Checkpoint Terkini:</label>
+          <textarea id="resi-status-note" class="form-textarea" rows="2" placeholder="Contoh: Paket telah keluar dari Hub Gudang Pusat Klaten"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Batal</button>
+        <button class="btn btn-primary" onclick="AdminApp.saveResiUpdate()">Simpan Logistik</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add Tip/Artikel -->
+  <div id="modal-add-tip" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Artikel Edukasi Pertanian & Tips Tani</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="form-tip-id">
+        <div class="form-group">
+          <label class="form-label">Judul Artikel:</label>
+          <input type="text" id="form-tip-title" class="form-input" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Kategori Tips:</label>
+            <select id="form-tip-category" class="form-select">
+              <option value="Perlindungan Tanaman">Perlindungan Tanaman</option>
+              <option value="Nutrisi & Kesuburan">Nutrisi & Kesuburan</option>
+              <option value="Organik & Biologi">Organik & Biologi</option>
+              <option value="Alat & Mekanisasi">Alat & Mekanisasi</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Penulis / Agronomis:</label>
+            <input type="text" id="form-tip-author" class="form-input">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ringkasan Singkat:</label>
+          <textarea id="form-tip-summary" class="form-textarea" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Konten Lengkap:</label>
+          <textarea id="form-tip-content" class="form-textarea" rows="6"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Batal</button>
+        <button class="btn btn-primary" onclick="AdminApp.saveTipForm()">Publikasikan Tips</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add Promo Voucher -->
+  <div id="modal-add-promo" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Buat Kupon Subsidi Pertanian</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Kode Kupon (Huruf Kapital):</label>
+          <input type="text" id="form-promo-code" class="form-input" placeholder="Contoh: PANENRAYA2026" style="text-transform: uppercase;" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nama Program Promo:</label>
+          <input type="text" id="form-promo-name" class="form-input" placeholder="Kupon Subsidi Bibit Musim Hujan" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Diskon (%):</label>
+            <input type="number" id="form-promo-disc" class="form-input" value="10">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Min. Belanja (Rp):</label>
+            <input type="number" id="form-promo-min" class="form-input" value="100000">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kuota Maksimal Penggunaan:</label>
+          <input type="number" id="form-promo-quota" class="form-input" value="100">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Batal</button>
+        <button class="btn btn-primary" onclick="AdminApp.savePromoForm()">Simpan Kupon</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Surat Jalan & Invoice -->
+  <div id="modal-invoice" class="modal-overlay">
+    <div class="modal-box" style="max-width: 800px;">
+      <div class="modal-header no-print">
+        <h3 class="modal-title">Surat Jalan & Invoice Pergudangan</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body" id="modal-invoice-content"></div>
+      <div class="modal-footer no-print">
+        <button class="btn btn-secondary btn-modal-cancel">Tutup</button>
+        <button class="btn btn-primary" onclick="window.print()">Cetak Dokumen Surat Jalan</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="no-print"></div>
+
+  <!-- Scripts -->
+  <script src="js/admin.js"></script>
+</body>
+</html>

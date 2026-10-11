@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masuk Akun Petani & Pelanggan - TANIHUB / Tani.SM</title>
+
+  <!-- PWA Meta Tags & Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#04160E">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TANIHUB">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+  <link rel="stylesheet" href="css/common.css">
+  <script src="js/pwa.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #03130d;
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, transparent 180px, rgba(16, 185, 129, 0.06) 181px, transparent 183px),
+        radial-gradient(circle at 50% 50%, transparent 320px, rgba(16, 185, 129, 0.05) 321px, transparent 323px),
+        radial-gradient(circle at 50% 50%, transparent 480px, rgba(16, 185, 129, 0.04) 481px, transparent 483px),
+        radial-gradient(circle at 50% 50%, transparent 640px, rgba(16, 185, 129, 0.03) 641px, transparent 643px),
+        radial-gradient(circle at 50% 50%, transparent 800px, rgba(16, 185, 129, 0.02) 801px, transparent 803px);
+      color: #E2E8F0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Outer Wrapper */
+    .login-container {
+      width: 100%;
+      max-width: 430px;
+      z-index: 2;
+    }
+
+    /* Centered Dark Emerald Card */
+    .login-card {
+      background-color: rgba(6, 26, 18, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(16, 185, 129, 0.22);
+      border-radius: 24px;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 35px rgba(16, 185, 129, 0.08);
+      padding: 36px 30px;
+      transition: border-color 0.3s ease;
+    }
+
+    .login-card:hover {
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+
+    /* Logo & Header */
+    .brand-header {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+
+    .logo-container {
+      width: 90px;
+      height: 90px;
+      margin: 0 auto 16px auto;
+      background: linear-gradient(145deg, rgba(9, 46, 30, 0.8) 0%, rgba(3, 20, 13, 0.95) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      padding: 6px;
+    }
+
+    .brand-logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+    }
+
+    .brand-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #10B981;
+      letter-spacing: 3.5px;
+      text-transform: uppercase;
+      margin: 0 0 6px 0;
+      text-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+    }
+
+    .brand-subtitle {
+      font-size: 13px;
+      color: #8BA498;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #9AB3A5;
+      margin-bottom: 7px;
+    }
+
+    .input-wrapper-dark {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-input-dark {
+      width: 100%;
+      padding: 12px 14px;
+      background-color: #04160E;
+      border: 1px solid rgba(16, 185, 129, 0.18);
+      border-radius: 10px;
+      color: #FFFFFF;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+
+    .form-input-dark::placeholder {
+      color: #415F50;
+      opacity: 1;
+    }
+
+    .form-input-dark:focus {
+      border-color: #10B981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+      background-color: #051d13;
+    }
+
+    .form-input-dark.is-invalid {
+      border-color: #EF4444 !important;
+      background-color: #1A0909 !important;
+    }
+
+    .form-input-dark.is-valid {
+      border-color: #10B981;
+    }
+
+    .field-error-dark {
+      color: #F87171;
+      font-size: 12px;
+      margin-top: 5px;
+      display: none;
+      font-weight: 500;
+    }
+
+    .field-error-dark.show {
+      display: block;
+    }
+
+    .toggle-password-dark {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #6D8E7D;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      padding: 4px;
+      transition: color 0.15s;
+    }
+
+    .toggle-password-dark:hover {
+      color: #10B981;
+    }
+
+    /* Helpers row */
+    .form-helpers {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #7B988A;
+      margin-bottom: 6px;
+    }
+
+    .form-helpers a {
+      color: #34D399;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .form-helpers a:hover {
+      color: #6EE7B7;
+      text-decoration: underline;
+    }
+
+    .remember-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .remember-label input[type="checkbox"] {
+      accent-color: #10B981;
+    }
+
+    /* Submit Button (Matching screenshot) */
+    .btn-submit-green {
+      width: 100%;
+      background: #05C065;
+      background: linear-gradient(180deg, #10B981 0%, #059669 100%);
+      color: #022013;
+      border: none;
+      padding: 13px 20px;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 14px;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.45);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-submit-green:hover {
+      background: #10B981;
+      box-shadow: 0 6px 26px rgba(16, 185, 129, 0.65);
+      transform: translateY(-1px);
+    }
+
+    .btn-submit-green:active {
+      transform: translateY(0);
+    }
+
+    .btn-submit-green:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Alerts */
+    .alert-banner-dark {
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 18px;
+      display: none;
+      line-height: 1.4;
+    }
+
+    .alert-banner-dark.alert-error {
+      background-color: rgba(69, 10, 10, 0.85);
+      color: #FECACA;
+      border: 1px solid #EF4444;
+    }
+
+    .alert-banner-dark.alert-success {
+      background-color: rgba(6, 78, 59, 0.85);
+      color: #A7F3D0;
+      border: 1px solid #10B981;
+    }
+
+    /* Demo Box (Exact layout from image) */
+    .demo-box {
+      margin-top: 22px;
+      padding: 14px 16px;
+      background-color: rgba(4, 22, 14, 0.65);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .demo-box-title {
+      font-weight: 700;
+      color: #A7C5B5;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .demo-accounts-list {
+      color: #7B988A;
+      line-height: 1.6;
+    }
+
+    .demo-chip {
+      cursor: pointer;
+      display: block;
+      padding: 4px 6px;
+      margin: 2px 0;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+
+    .demo-chip:hover {
+      background-color: rgba(16, 185, 129, 0.12);
+      color: #ECFDF5;
+    }
+
+    .demo-chip strong {
+      color: #A7C5B5;
+    }
+
+    /* Switch to Admin Link */
+    .switch-link-wrapper {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 12px;
+      color: #7B988A;
+    }
+
+    .switch-link-wrapper a {
+      color: #34D399;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    .switch-link-wrapper a:hover {
+      color: #6EE7B7;
+    }
+
+    /* Floating Powered by Netlify Badge */
+    .netlify-badge {
+      position: fixed;
+      bottom: 18px;
+      right: 20px;
+      background: rgba(4, 22, 14, 0.85);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      color: #8BA498;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      backdrop-filter: blur(8px);
+      z-index: 10;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .netlify-badge svg {
+      width: 14px;
+      height: 14px;
+      fill: #00AD9F;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-card">
+      
+      <!-- Brand & Header -->
+      <div class="brand-header">
+        <div class="logo-container">
+          <img src="img/logo-tani.png" alt="Logo Tani.SM" class="brand-logo-img">
+        </div>
+        <h1 class="brand-title">TANIHUB</h1>
+        <p class="brand-subtitle">Pasar Pertanian Masa Depan</p>
+      </div>
+
+      <!-- Alert Notification -->
+      <div id="customer-alert" class="alert-banner-dark"></div>
+
+      <!-- Login Form -->
+      <form id="form-customer-login" novalidate onsubmit="CustomerAuth.handleSubmit(event)">
+        <!-- Nama Pengguna / Email / No. HP -->
+        <div class="form-group">
+          <label class="form-label" for="cust-identifier">Nama Pengguna</label>
+          <div class="input-wrapper-dark">
+            <input type="text" id="cust-identifier" class="form-input-dark" placeholder="Masukkan nama pengguna" autocomplete="username">
+          </div>
+          <div class="field-error-dark" id="err-cust-identifier">Nama pengguna, email, atau nomor HP wajib diisi.</div>
+        </div>
+
+        <!-- Kata Sandi -->
+        <div class="form-group">
+          <label class="form-label" for="cust-password">Kata Sandi</label>
+          <div class="input-wrapper-dark">
+            <input type="password" id="cust-password" class="form-input-dark" placeholder="Masukkan kata sandi" autocomplete="current-password">
+            <button type="button" class="toggle-password-dark" id="btn-toggle-pw" onclick="CustomerAuth.togglePasswordVisibility()">Lihat</button>
+          </div>
+          <div class="field-error-dark" id="err-cust-password">Kata sandi minimal 6 karakter.</div>
+        </div>
+
+        <!-- Helpers -->
+        <div class="form-helpers">
+          <label class="remember-label">
+            <input type="checkbox" id="cust-remember" checked>
+            <span>Ingat Akun</span>
+          </label>
+          <a href="javascript:void(0)" onclick="alert('Fitur Reset Sandi: Silakan hubungi layanan bantuan TaniHub WhatsApp 0812-9900-1122.')">Lupa Kata Sandi?</a>
+        </div>
+
+        <!-- Submit Button matching the screenshot -->
+        <button type="submit" class="btn-submit-green" id="btn-submit-customer">
+          <span>🚀</span> MASUK KE TANIHUB
+        </button>
+      </form>
+
+
+
+      <!-- Switcher to Admin -->
+      <div class="switch-link-wrapper">
+        Petugas Pergudangan? <a href="login-admin.html">Masuk ke Portal Admin Gudang &rarr;</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Bottom Netlify Badge matching the screenshot -->
+  <div class="netlify-badge">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 2L3 7v10l9 5 9-5V7l-9-5zm0 2.2l6.8 3.8-3.4 1.9-6.8-3.8L12 4.2zm-7.6 4.6l6.8 3.8v7.6l-6.8-3.8V8.8zm8.4 11.4v-7.6l6.8-3.8v7.6l-6.8 3.8z"/>
+    </svg>
+    <span>Powered by <strong>Netlify</strong></span>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const CustomerAuth = {
+      init() {
+        this.inputIdentifier = document.getElementById('cust-identifier');
+        this.inputPassword = document.getElementById('cust-password');
+        this.alertBox = document.getElementById('customer-alert');
+        this.btnSubmit = document.getElementById('btn-submit-customer');
+
+        this.clearErrors();
+
+        // Live validation listeners
+        this.inputIdentifier.addEventListener('blur', () => this.validateIdentifier());
+        this.inputIdentifier.addEventListener('input', () => {
+          if (this.inputIdentifier.classList.contains('is-invalid')) {
+            this.validateIdentifier();
+          }
+        });
+
+        this.inputPassword.addEventListener('blur', () => this.validatePassword());
+        this.inputPassword.addEventListener('input', () => {
+          if (this.inputPassword.classList.contains('is-invalid')) {
+            this.validatePassword();
+          }
+        });
+      },
+
+      togglePasswordVisibility() {
+        const btn = document.getElementById('btn-toggle-pw');
+        if (this.inputPassword.type === 'password') {
+          this.inputPassword.type = 'text';
+          btn.textContent = 'Sembunyi';
+        } else {
+          this.inputPassword.type = 'password';
+          btn.textContent = 'Lihat';
+        }
+      },
+
+      fillDemo(username, pass) {
+        this.inputIdentifier.value = username;
+        this.inputPassword.value = pass;
+        this.clearErrors();
+        this.showSuccessAlert(`Form diisi otomatis dengan akun demo: ${username}`);
+      },
+
+      clearErrors() {
+        this.inputIdentifier.classList.remove('is-invalid', 'is-valid');
+        this.inputPassword.classList.remove('is-invalid', 'is-valid');
+        document.getElementById('err-cust-identifier').classList.remove('show');
+        document.getElementById('err-cust-password').classList.remove('show');
+        this.alertBox.style.display = 'none';
+      },
+
+      validateIdentifier() {
+        const val = this.inputIdentifier.value.trim();
+        const errEl = document.getElementById('err-cust-identifier');
+
+        if (!val) {
+          this.inputIdentifier.classList.add('is-invalid');
+          this.inputIdentifier.classList.remove('is-valid');
+          errEl.textContent = 'Nama pengguna, email, atau nomor HP wajib diisi.';
+          errEl.classList.add('show');
+          return false;
+        }
+
+        if (val.length < 3) {
+          this.inputIdentifier.classList.add('is-invalid');
+          this.inputIdentifier.classList.remove('is-valid');
+          errEl.textContent = 'Nama pengguna minimal 3 karakter.';
+          errEl.classList.add('show');
+          return false;
+        }
+
+        this.inputIdentifier.classList.remove('is-invalid');
+        this.inputIdentifier.classList.add('is-valid');
+        errEl.classList.remove('show');
+        return true;
+      },
+
+      validatePassword() {
+        const val = this.inputPassword.value;
+        const errEl = document.getElementById('err-cust-password');
+
+        if (!val) {
+          this.inputPassword.classList.add('is-invalid');
+          this.inputPassword.classList.remove('is-valid');
+          errEl.textContent = 'Kata sandi wajib diisi.';
+          errEl.classList.add('show');
+          return false;
+        }
+
+        if (val.length < 6) {
+          this.inputPassword.classList.add('is-invalid');
+          this.inputPassword.classList.remove('is-valid');
+          errEl.textContent = 'Kata sandi minimal 6 karakter.';
+          errEl.classList.add('show');
+          return false;
+        }
+
+        this.inputPassword.classList.remove('is-invalid');
+        this.inputPassword.classList.add('is-valid');
+        errEl.classList.remove('show');
+        return true;
+      },
+
+      handleSubmit(e) {
+        e.preventDefault();
+        this.alertBox.style.display = 'none';
+
+        const validId = this.validateIdentifier();
+        const validPw = this.validatePassword();
+
+        if (!validId || !validPw) {
+          return;
+        }
+
+        const identifier = this.inputIdentifier.value.trim().toLowerCase();
+        const password = this.inputPassword.value;
+
+        // 1. Akun Admin masuk via portal customer (memiliki hak penuh)
+        if (identifier === 'admin.gudang@tanism.id' || identifier === 'admin') {
+          if (password === 'gudang2026' || password === 'admin123') {
+            const adminSession = window.taniStore ? window.taniStore.loginAsAdmin() : { name: 'Admin Gudang' };
+            this.showSuccessAlert(`Login Berhasil sebagai Admin (${adminSession.name})! Membuka pasar pertanian...`);
+            this.btnSubmit.disabled = true;
+            this.btnSubmit.innerHTML = '<span>⏳</span> Membuka Pasar...';
+            setTimeout(() => {
+              window.location.href = 'index.html';
+            }, 800);
+            return;
+          } else {
+            this.showErrorAlert('Kata sandi admin salah. Periksa kembali atau gunakan admin123.');
+            this.inputPassword.classList.add('is-invalid');
+            return;
+          }
+        }
+
+        // 2. Akun Pelanggan Demo "customer / customer123" (sesuai screenshot)
+        if (identifier === 'customer') {
+          if (password === 'customer123' || password === '123456') {
+            const demoCustomer = {
+              id: 'CST-DEMO-01',
+              name: 'Pak Budi Santoso (Mitra Tani)',
+              phone: '0812-3456-7890',
+              email: 'customer@tanihub.id',
+              kelompokTani: 'Mitra Tani Sejahtera',
+              address: 'Jl. Raya Pertanian No. 12, Klaten'
+            };
+            if (window.taniStore) window.taniStore.loginAsCustomer(demoCustomer);
+            this.showSuccessAlert(`Login berhasil! Selamat datang, ${demoCustomer.name}. Membuka pasar pertanian...`);
+            this.btnSubmit.disabled = true;
+            this.btnSubmit.innerHTML = '<span>⏳</span> Membuka Pasar...';
+            setTimeout(() => {
+              window.location.href = 'index.html';
+            }, 800);
+            return;
+          } else {
+            this.showErrorAlert('Kata sandi salah. Gunakan sandi "customer123" untuk akun demo pelanggan.');
+            this.inputPassword.classList.add('is-invalid');
+            return;
+          }
+        }
+
+        // 3. Cek daftar pelanggan terdaftar di store
+        const customers = window.taniStore ? window.taniStore.getCustomers() : [];
+        const matched = customers.find(c => 
+          (c.email && c.email.toLowerCase() === identifier) || 
+          (c.phone && c.phone.replace(/[-\s]/g, '') === identifier.replace(/[-\s]/g, ''))
+        );
+
+        if (password !== 'petani123' && password !== 'customer123' && password !== '123456') {
+          this.showErrorAlert('Kata sandi salah. Silakan coba kembali atau gunakan akun demo customer / customer123.');
+          this.inputPassword.classList.add('is-invalid');
+          return;
+        }
+
+        const activeCustomer = matched || {
+          id: 'CST-' + Math.floor(100 + Math.random() * 900),
+          name: identifier.includes('@') ? identifier.split('@')[0] : identifier,
+          phone: identifier.includes('@') ? '0812-0000-0000' : identifier,
+          email: identifier.includes('@') ? identifier : 'pelanggan@tanihub.id',
+          kelompokTani: 'Mitra Tani Mandiri',
+          address: 'Alamat Lahan Terdaftar'
+        };
+
+        if (window.taniStore) {
+          window.taniStore.loginAsCustomer(activeCustomer);
+        }
+
+        this.showSuccessAlert(`Login berhasil! Selamat datang, ${activeCustomer.name}. Membuka pasar...`);
+        this.btnSubmit.disabled = true;
+        this.btnSubmit.innerHTML = '<span>⏳</span> Membuka Pasar...';
+
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 800);
+      },
+
+      showErrorAlert(msg) {
+        this.alertBox.className = 'alert-banner-dark alert-error';
+        this.alertBox.textContent = msg;
+        this.alertBox.style.display = 'block';
+      },
+
+      showSuccessAlert(msg) {
+        this.alertBox.className = 'alert-banner-dark alert-success';
+        this.alertBox.textContent = msg;
+        this.alertBox.style.display = 'block';
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => CustomerAuth.init());
+  </script>
+</body>
+</html>
