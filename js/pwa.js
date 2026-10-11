@@ -14,30 +14,58 @@
     document.documentElement.classList.add('pwa-standalone');
   }
 
+  // Auto-reload HANYA saat service worker lama digantikan oleh yang baru.
+  // Saat aplikasi baru pertama dipasang, hadController === false sehingga
+  // halaman tidak dimuat ulang (tidak ada yang perlu disegarkan).
+  const hadControllerAtStart = !!navigator.serviceWorker?.controller;
+  let refreshing = false;
+  navigator.serviceWorker?.addEventListener('controllerchange', () => {
+    if (!hadControllerAtStart || refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+
   // 1. Register Service Worker
-  if ('serviceWorker' in navigator) {
+  //
+  // Di localhost Service Worker DIMATIKAN dengan sengaja: kalau aktif, setiap
+  // edit file lokal akan dilayani dari cache dan perubahan tidak langsung terlihat.
+  // Untuk menguji perilaku install sungguhan, buka lewat HTTPS / domain asli.
+  const isLocalDev = ['localhost', '127.0.0.1', '::1', ''].includes(location.hostname);
+
+  if ('serviceWorker' in navigator && !isLocalDev) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register('./sw.js')
         .then((reg) => {
           console.log('[PWA] Service Worker terdaftar dengan scope:', reg.scope);
 
-          // Check for SW updates
+          // Ada service worker baru yang terpasang -> menunggu aktifasi.
           reg.addEventListener('updatefound', () => {
             const newWorker = reg.installing;
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  showToast('Versi baru TANIHUB tersedia. Muat ulang halaman untuk memperbarui.', 'info');
-                }
-              });
-            }
+            if (!newWorker) return;
+
+            newWorker.addEventListener('statechange', () => {
+              // 'installed' + sudah ada controller sebelumnya = ini UPDATE,
+              // bukan instalasi baru. Halaman akan di-reload otomatis oleh
+              // listener controllerchange di atas.
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('[PWA] Versi baru terpasang, memuat ulang halaman...');
+              }
+            });
           });
         })
         .catch((err) => {
           console.warn('[PWA] Pendaftaran Service Worker gagal:', err);
         });
     });
+  } else if (isLocalDev) {
+    // Bersihkan SW & cache leftover dari sesi sebelumnya supaya file lokal
+    // benar-benar dibaca langsung dari disk.
+    navigator.serviceWorker?.getRegistrations?.().then((regs) => regs.forEach((r) => r.unregister()));
+    if (window.caches) {
+      caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
+    }
+    console.log('[PWA] Mode pengembangan: Service Worker dimatikan agar perubahan langsung terlihat.');
   }
 
   // 2. Capture beforeinstallprompt (Desktop Chrome/Edge & Android Chrome)
@@ -72,13 +100,17 @@
     }
   }
 
+  /**
+   * Sembunyikan tombol install bila memang tidak bisa dipakai:
+   * - sudah terinstall (standalone)
+   * - browser tidak mendukung prompt instalasi (mis. Firefox, Safari non-iOS)
+   *
+   * Di iOS tetap ditampilkan karena memang ada langkah manual (Share > Add to Home Screen).
+   */
   function updateInstallButtons(canInstall) {
+    const show = !isStandalone && (canInstall || isIos);
     document.querySelectorAll('.btn-pwa-install, #pwa-install-header-btn').forEach((btn) => {
-      if (isStandalone) {
-        btn.style.display = 'none';
-      } else {
-        btn.style.display = 'inline-flex';
-      }
+      btn.style.display = show ? 'inline-flex' : 'none';
     });
   }
 
@@ -204,8 +236,10 @@
     }
   };
 
-  // Run on page load
+  // Run on page load.
+  // Mulai dalam keadaan tersembunyi: tombol baru muncul setelah browser
+  // benar-benar memberi tahu aplikasi bisa di-install (beforeinstallprompt).
   window.addEventListener('DOMContentLoaded', () => {
-    updateInstallButtons(!isStandalone);
+    updateInstallButtons(isIos);
   });
 })();

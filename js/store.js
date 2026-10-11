@@ -20,47 +20,96 @@ class TaniStore {
       MEMBER_SETTINGS: 'tanism_member_settings'
     };
 
+    // Cache in-memory: menghindari JSON.parse localStorage berulang di setiap render.
+    this._cache = new Map();
+    // Index produk by-id agar getProductById() O(1), bukan scan seluruh array.
+    this._productIndex = null;
+
     this.initData();
   }
 
+  // --- Cache Layer (semua akses localStorage HARUS lewat sini) ---
+  readKey(key, fallback = null) {
+    if (this._cache.has(key)) return this._cache.get(key);
+    let raw;
+    try {
+      raw = localStorage.getItem(key);
+    } catch {
+      return fallback;
+    }
+    let value = fallback;
+    if (raw !== null) {
+      try {
+        value = JSON.parse(raw);
+      } catch {
+        value = fallback;
+      }
+    }
+    this._cache.set(key, value);
+    return value;
+  }
+
+  writeKey(key, value) {
+    this._cache.set(key, value);
+    // Data produk & pengaturan member memengaruhi isi object tier.
+    if (key === this.STORAGE_KEYS.PRODUCTS) {
+      this._productIndex = null;
+      this._clearTierCache();
+    }
+    if (key === this.STORAGE_KEYS.MEMBER_SETTINGS) {
+      this._clearTierCache();
+    }
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (err) {
+      console.warn('[TaniStore] Gagal menyimpan', key, err);
+    }
+    return value;
+  }
+
+  removeKey(key) {
+    this._cache.delete(key);
+    if (key === this.STORAGE_KEYS.PRODUCTS) {
+      this._productIndex = null;
+      this._clearTierCache();
+    }
+    localStorage.removeItem(key);
+  }
+
+  // Dipakai saat data berubah dari luar (mis. reset dari halaman admin).
+  invalidate(key = null) {
+    if (key) {
+      this._cache.delete(key);
+      if (key === this.STORAGE_KEYS.PRODUCTS) this._productIndex = null;
+    } else {
+      this._cache.clear();
+      this._productIndex = null;
+    }
+  }
+
+  // Seed hanya jalan bila key benar-benar belum pernah tersimpan.
+  seedIfMissing(key, seedValue) {
+    if (localStorage.getItem(key) === null) {
+      localStorage.setItem(key, JSON.stringify(seedValue));
+    }
+    this._cache.set(key, this.readKey(key));
+  }
+
   initData() {
-    if (!localStorage.getItem(this.STORAGE_KEYS.PRODUCTS)) {
-      localStorage.setItem(this.STORAGE_KEYS.PRODUCTS, JSON.stringify(SEED_DATA.products));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.CATEGORIES)) {
-      localStorage.setItem(this.STORAGE_KEYS.CATEGORIES, JSON.stringify(SEED_DATA.categories));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.CUSTOMERS)) {
-      localStorage.setItem(this.STORAGE_KEYS.CUSTOMERS, JSON.stringify(SEED_DATA.customers));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.MEMBER_SETTINGS)) {
-      localStorage.setItem(this.STORAGE_KEYS.MEMBER_SETTINGS, JSON.stringify(SEED_DATA.memberSettings));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.ORDERS)) {
-      localStorage.setItem(this.STORAGE_KEYS.ORDERS, JSON.stringify(SEED_DATA.orders));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.VOUCHERS)) {
-      localStorage.setItem(this.STORAGE_KEYS.VOUCHERS, JSON.stringify(SEED_DATA.vouchers));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.TIPS)) {
-      localStorage.setItem(this.STORAGE_KEYS.TIPS, JSON.stringify(SEED_DATA.tips));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.REVIEWS)) {
-      localStorage.setItem(this.STORAGE_KEYS.REVIEWS, JSON.stringify(SEED_DATA.reviews));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.STOCK_LOGS)) {
-      localStorage.setItem(this.STORAGE_KEYS.STOCK_LOGS, JSON.stringify(SEED_DATA.stockLogs));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.BANNERS)) {
-      localStorage.setItem(this.STORAGE_KEYS.BANNERS, JSON.stringify(SEED_DATA.warehouseBanners));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.CART)) {
-      localStorage.setItem(this.STORAGE_KEYS.CART, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.WISHLIST)) {
-      localStorage.setItem(this.STORAGE_KEYS.WISHLIST, JSON.stringify([]));
-    }
-    if (!localStorage.getItem(this.STORAGE_KEYS.AUTH)) {
+    this.seedIfMissing(this.STORAGE_KEYS.PRODUCTS, SEED_DATA.products);
+    this.seedIfMissing(this.STORAGE_KEYS.CATEGORIES, SEED_DATA.categories);
+    this.seedIfMissing(this.STORAGE_KEYS.CUSTOMERS, SEED_DATA.customers);
+    this.seedIfMissing(this.STORAGE_KEYS.MEMBER_SETTINGS, SEED_DATA.memberSettings);
+    this.seedIfMissing(this.STORAGE_KEYS.ORDERS, SEED_DATA.orders);
+    this.seedIfMissing(this.STORAGE_KEYS.VOUCHERS, SEED_DATA.vouchers);
+    this.seedIfMissing(this.STORAGE_KEYS.TIPS, SEED_DATA.tips);
+    this.seedIfMissing(this.STORAGE_KEYS.REVIEWS, SEED_DATA.reviews);
+    this.seedIfMissing(this.STORAGE_KEYS.STOCK_LOGS, SEED_DATA.stockLogs);
+    this.seedIfMissing(this.STORAGE_KEYS.BANNERS, SEED_DATA.warehouseBanners);
+    this.seedIfMissing(this.STORAGE_KEYS.CART, []);
+    this.seedIfMissing(this.STORAGE_KEYS.WISHLIST, []);
+
+    if (localStorage.getItem(this.STORAGE_KEYS.AUTH) === null) {
       // Default initial session: Customer
       const defaultAuth = {
         role: 'customer',
@@ -91,29 +140,26 @@ class TaniStore {
       }
     });
     if (updated) {
-      localStorage.setItem(this.STORAGE_KEYS.CUSTOMERS, JSON.stringify(custs));
+      this.writeKey(this.STORAGE_KEYS.CUSTOMERS, custs);
     }
   }
 
   // --- Auth Methods ---
   getAuth() {
-    try {
-      const auth = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.AUTH)) || null;
-      if (auth && auth.role === 'customer' && auth.id) {
-        const freshCust = this.getCustomerById(auth.id);
-        if (freshCust) {
-          auth.tier = freshCust.tier || 'silver';
-          auth.points = freshCust.points || 0;
-        }
+    const auth = this.readKey(this.STORAGE_KEYS.AUTH, null);
+    if (!auth) return null;
+    if (auth.role === 'customer' && auth.id) {
+      const freshCust = this.getCustomerById(auth.id);
+      if (freshCust) {
+        auth.tier = freshCust.tier || 'silver';
+        auth.points = freshCust.points || 0;
       }
-      return auth;
-    } catch {
-      return null;
     }
+    return auth;
   }
 
   setAuth(user) {
-    localStorage.setItem(this.STORAGE_KEYS.AUTH, JSON.stringify(user));
+    return this.writeKey(this.STORAGE_KEYS.AUTH, user);
   }
 
   loginAsCustomer(customerData = null) {
@@ -147,16 +193,24 @@ class TaniStore {
   }
 
   logout() {
-    localStorage.removeItem(this.STORAGE_KEYS.AUTH);
+    this.removeKey(this.STORAGE_KEYS.AUTH);
   }
 
   // --- Products ---
   getProducts() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PRODUCTS) || '[]');
+    return this.readKey(this.STORAGE_KEYS.PRODUCTS, []);
+  }
+
+  // Map index rebuilt lazily, otomatis invalidasi setiap kali produk ditulis.
+  getProductMap() {
+    if (!this._productIndex) {
+      this._productIndex = new Map(this.getProducts().map(p => [p.id, p]));
+    }
+    return this._productIndex;
   }
 
   getProductById(id) {
-    return this.getProducts().find(p => p.id === id);
+    return this.getProductMap().get(id) || null;
   }
 
   saveProduct(product) {
@@ -167,14 +221,13 @@ class TaniStore {
     } else {
       products.unshift(product);
     }
-    localStorage.setItem(this.STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+    this.writeKey(this.STORAGE_KEYS.PRODUCTS, products);
     return product;
   }
 
   deleteProduct(id) {
-    let products = this.getProducts();
-    products = products.filter(p => p.id !== id);
-    localStorage.setItem(this.STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+    const products = this.getProducts().filter(p => p.id !== id);
+    this.writeKey(this.STORAGE_KEYS.PRODUCTS, products);
   }
 
   updateProductStock(productId, deltaQty, type = 'Penyesuaian', note = '') {
@@ -183,7 +236,7 @@ class TaniStore {
     if (!p) return false;
 
     p.stock = Math.max(0, p.stock + deltaQty);
-    localStorage.setItem(this.STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+    this.writeKey(this.STORAGE_KEYS.PRODUCTS, products);
 
     // Log the change
     this.addStockLog({
@@ -202,7 +255,7 @@ class TaniStore {
 
   // --- Categories ---
   getCategories() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.CATEGORIES) || '[]');
+    return this.readKey(this.STORAGE_KEYS.CATEGORIES, []);
   }
 
   saveCategory(cat) {
@@ -213,23 +266,21 @@ class TaniStore {
     } else {
       cats.push(cat);
     }
-    localStorage.setItem(this.STORAGE_KEYS.CATEGORIES, JSON.stringify(cats));
+    this.writeKey(this.STORAGE_KEYS.CATEGORIES, cats);
     return cat;
   }
 
   deleteCategory(catId) {
-    let cats = this.getCategories();
-    cats = cats.filter(c => c.id !== catId);
-    localStorage.setItem(this.STORAGE_KEYS.CATEGORIES, JSON.stringify(cats));
+    this.writeKey(this.STORAGE_KEYS.CATEGORIES, this.getCategories().filter(c => c.id !== catId));
   }
 
   // --- Customers ---
   getCustomers() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.CUSTOMERS) || '[]');
+    return this.readKey(this.STORAGE_KEYS.CUSTOMERS, []);
   }
 
   getCustomerById(id) {
-    return this.getCustomers().find(c => c.id === id);
+    return this.getCustomers().find(c => c.id === id) || null;
   }
 
   saveCustomer(customer) {
@@ -240,17 +291,17 @@ class TaniStore {
     } else {
       custs.push(customer);
     }
-    localStorage.setItem(this.STORAGE_KEYS.CUSTOMERS, JSON.stringify(custs));
+    this.writeKey(this.STORAGE_KEYS.CUSTOMERS, custs);
     return customer;
   }
 
   // --- Orders ---
   getOrders() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.ORDERS) || '[]');
+    return this.readKey(this.STORAGE_KEYS.ORDERS, []);
   }
 
   getOrderById(id) {
-    return this.getOrders().find(o => o.id === id);
+    return this.getOrders().find(o => o.id === id) || null;
   }
 
   saveOrder(order) {
@@ -261,7 +312,7 @@ class TaniStore {
     } else {
       orders.unshift(order);
     }
-    localStorage.setItem(this.STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+    this.writeKey(this.STORAGE_KEYS.ORDERS, orders);
     return order;
   }
 
@@ -281,24 +332,24 @@ class TaniStore {
         text: trackingNote
       });
     }
-    localStorage.setItem(this.STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+    this.writeKey(this.STORAGE_KEYS.ORDERS, orders);
     return order;
   }
 
   // --- Stock Logs ---
   getStockLogs() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.STOCK_LOGS) || '[]');
+    return this.readKey(this.STORAGE_KEYS.STOCK_LOGS, []);
   }
 
   addStockLog(log) {
     const logs = this.getStockLogs();
     logs.unshift(log);
-    localStorage.setItem(this.STORAGE_KEYS.STOCK_LOGS, JSON.stringify(logs));
+    this.writeKey(this.STORAGE_KEYS.STOCK_LOGS, logs);
   }
 
   // --- Vouchers / Promo ---
   getVouchers() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.VOUCHERS) || '[]');
+    return this.readKey(this.STORAGE_KEYS.VOUCHERS, []);
   }
 
   saveVoucher(v) {
@@ -309,23 +360,21 @@ class TaniStore {
     } else {
       vouchers.push(v);
     }
-    localStorage.setItem(this.STORAGE_KEYS.VOUCHERS, JSON.stringify(vouchers));
+    this.writeKey(this.STORAGE_KEYS.VOUCHERS, vouchers);
     return v;
   }
 
   deleteVoucher(code) {
-    let vouchers = this.getVouchers();
-    vouchers = vouchers.filter(v => v.code !== code);
-    localStorage.setItem(this.STORAGE_KEYS.VOUCHERS, JSON.stringify(vouchers));
+    this.writeKey(this.STORAGE_KEYS.VOUCHERS, this.getVouchers().filter(v => v.code !== code));
   }
 
   // --- Content / Tips ---
   getTips() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.TIPS) || '[]');
+    return this.readKey(this.STORAGE_KEYS.TIPS, []);
   }
 
   getTipById(id) {
-    return this.getTips().find(t => t.id === id);
+    return this.getTips().find(t => t.id === id) || null;
   }
 
   saveTip(tip) {
@@ -336,25 +385,23 @@ class TaniStore {
     } else {
       tips.unshift(tip);
     }
-    localStorage.setItem(this.STORAGE_KEYS.TIPS, JSON.stringify(tips));
+    this.writeKey(this.STORAGE_KEYS.TIPS, tips);
     return tip;
   }
 
   deleteTip(id) {
-    let tips = this.getTips();
-    tips = tips.filter(t => t.id !== id);
-    localStorage.setItem(this.STORAGE_KEYS.TIPS, JSON.stringify(tips));
+    this.writeKey(this.STORAGE_KEYS.TIPS, this.getTips().filter(t => t.id !== id));
   }
 
   // --- Reviews ---
   getReviews() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.REVIEWS) || '[]');
+    return this.readKey(this.STORAGE_KEYS.REVIEWS, []);
   }
 
   addReview(review) {
     const reviews = this.getReviews();
     reviews.unshift(review);
-    localStorage.setItem(this.STORAGE_KEYS.REVIEWS, JSON.stringify(reviews));
+    this.writeKey(this.STORAGE_KEYS.REVIEWS, reviews);
 
     // Update product rating
     const products = this.getProducts();
@@ -364,14 +411,18 @@ class TaniStore {
       const totalStars = prodReviews.reduce((sum, r) => sum + Number(r.rating), 0);
       product.rating = Number((totalStars / prodReviews.length).toFixed(1));
       product.reviewCount = prodReviews.length;
-      localStorage.setItem(this.STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+      this.writeKey(this.STORAGE_KEYS.PRODUCTS, products);
     }
     return review;
   }
 
   // --- Cart ---
   getCart() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.CART) || '[]');
+    return this.readKey(this.STORAGE_KEYS.CART, []);
+  }
+
+  saveCart(cart) {
+    return this.writeKey(this.STORAGE_KEYS.CART, cart);
   }
 
   addToCart(productId, qty = 1) {
@@ -394,7 +445,7 @@ class TaniStore {
         selected: true
       });
     }
-    localStorage.setItem(this.STORAGE_KEYS.CART, JSON.stringify(cart));
+    this.writeKey(this.STORAGE_KEYS.CART, cart);
     return cart;
   }
 
@@ -411,61 +462,66 @@ class TaniStore {
         item.qty = Math.min(maxStock, qty);
       }
     }
-    localStorage.setItem(this.STORAGE_KEYS.CART, JSON.stringify(cart));
+    this.writeKey(this.STORAGE_KEYS.CART, cart);
     return cart;
   }
 
   removeFromCart(productId) {
-    let cart = this.getCart();
-    cart = cart.filter(item => item.productId !== productId);
-    localStorage.setItem(this.STORAGE_KEYS.CART, JSON.stringify(cart));
+    const cart = this.getCart().filter(item => item.productId !== productId);
+    this.writeKey(this.STORAGE_KEYS.CART, cart);
     return cart;
   }
 
   clearCart() {
-    localStorage.setItem(this.STORAGE_KEYS.CART, JSON.stringify([]));
+    this.writeKey(this.STORAGE_KEYS.CART, []);
   }
 
   // --- Wishlist ---
   getWishlist() {
-    return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.WISHLIST) || '[]');
+    return this.readKey(this.STORAGE_KEYS.WISHLIST, []);
   }
 
   toggleWishlist(productId) {
-    let wishlist = this.getWishlist();
+    const wishlist = this.getWishlist();
     const index = wishlist.indexOf(productId);
     if (index >= 0) {
       wishlist.splice(index, 1);
     } else {
       wishlist.push(productId);
     }
-    localStorage.setItem(this.STORAGE_KEYS.WISHLIST, JSON.stringify(wishlist));
+    this.writeKey(this.STORAGE_KEYS.WISHLIST, wishlist);
     return wishlist.includes(productId);
+  }
+
+  isWishlisted(productId) {
+    return this.getWishlist().includes(productId);
   }
 
   // --- Member & Loyalty Engine ---
   getMemberSettings() {
-    try {
-      const stored = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.MEMBER_SETTINGS));
-      if (stored) return { ...SEED_DATA.memberSettings, ...stored };
-    } catch (e) {}
-    return { ...SEED_DATA.memberSettings };
+    const stored = this.readKey(this.STORAGE_KEYS.MEMBER_SETTINGS, null);
+    return stored ? { ...SEED_DATA.memberSettings, ...stored } : { ...SEED_DATA.memberSettings };
   }
 
   saveMemberSettings(newSettings) {
-    const current = this.getMemberSettings();
-    const updated = { ...current, ...newSettings };
-    localStorage.setItem(this.STORAGE_KEYS.MEMBER_SETTINGS, JSON.stringify(updated));
+    const updated = { ...this.getMemberSettings(), ...newSettings };
+    this.writeKey(this.STORAGE_KEYS.MEMBER_SETTINGS, updated);
     return updated;
   }
 
   getTierInfo(tierKey = 'silver') {
     const key = (tierKey || 'silver').toLowerCase();
+    // Memoized: object tier ini hefty & dipanggil berulang (satu kali per kartu produk).
+    if (this._tierCache && this._tierCache.key === key) {
+      return this._tierCache.value;
+    }
+
     const settings = this.getMemberSettings();
     const bonusProduct = this.getProductById(settings.freeProductId) || {
       id: settings.freeProductId,
       name: 'Tray Semai Bibit 128 Lubang Tebal',
-      price: 8500
+      price: 8500,
+      unit: '1 Pcs'
     };
 
     const tiers = {
@@ -545,7 +601,14 @@ class TaniStore {
       }
     };
 
-    return tiers[key] || tiers.silver;
+    const value = tiers[key] || tiers.silver;
+    this._tierCache = { key, value };
+    return value;
+  }
+
+  // Cache di invalidate setiap kali produk atau pengaturan member berubah.
+  _clearTierCache() {
+    this._tierCache = null;
   }
 
   // Menghitung total transaksi pelanggan dalam periode evaluasi tertentu (default 90 hari)
@@ -717,6 +780,7 @@ class TaniStore {
   }
 
   resetAllData() {
+    this.invalidate();
     localStorage.clear();
     this.initData();
   }

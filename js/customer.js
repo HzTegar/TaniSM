@@ -4,6 +4,68 @@
  * Pesanan, Pelacakan, Wishlist, Ulasan, Tips, dan Profil Petani.
  */
 
+// Gambar cadangan saat foto produk gagal dimuat (data URI, tanpa request jaringan).
+const FALLBACK_IMAGE = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><rect width='300' height='300' fill='%232E7D32'/><text x='50%25' y='46%25' dominant-baseline='middle' text-anchor='middle' fill='%23FFFFFF' font-family='sans-serif' font-size='22' font-weight='bold'>Tani.SM</text><text x='50%25' y='60%25' dominant-baseline='middle' text-anchor='middle' fill='%23A7F3D0' font-family='sans-serif' font-size='14'>Sarana Pertanian</text></svg>";
+
+// --- Helper murni (tidak akses DOM/localStorage, aman dipanggil sesuka hati) ---
+
+// Persentase diskon dari harga coret, 0 bila tidak ada diskon.
+function discountPercent(product) {
+  if (!product.originalPrice || product.originalPrice <= product.price) return 0;
+  return Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+}
+
+// Estimasi poin yang didapat dari pembelian sebuah produk.
+function estimatePoints(price, tierInfo, settings) {
+  const ratio = Number(settings.pointsPerRupiah) || 10000;
+  return Math.floor((price / ratio) * (tierInfo.pointsMultiplier || 1.0));
+}
+
+// Subtotal, berat total, dan jumlah item dari sekumpulan item keranjang.
+function sumCart(cart) {
+  let subtotal = 0;
+  let totalWeight = 0;
+  let count = 0;
+  for (const item of cart) {
+    subtotal += item.price * item.qty;
+    totalWeight += (item.weightGram || 1000) * item.qty;
+    count += item.qty;
+  }
+  return { subtotal, totalWeight, totalWeightKg: totalWeight / 1000, count };
+}
+
+// Nilai diskon dari voucher yang sudah diterapkan.
+function calcVoucherDiscount(voucher, subtotal) {
+  if (!voucher) return 0;
+  if (voucher.discountFlat) return voucher.discountFlat;
+  if (voucher.discountPercent) {
+    let amount = (subtotal * voucher.discountPercent) / 100;
+    if (voucher.maxDiscount && amount > voucher.maxDiscount) amount = voucher.maxDiscount;
+    return amount;
+  }
+  return 0;
+}
+
+// Ongkos kirim: tarif dasar + Rp3.000 per kg tambahan.
+function calcShipping(totalWeightGram, courierRate = 25000) {
+  const rate = Number(courierRate) || 25000;
+  const kg = Math.max(1, Math.ceil(totalWeightGram / 1000));
+  return Math.max(rate, rate + (kg - 1) * 3000);
+}
+
+// Jumlah produk per halaman katalog. Cukup kecil agar render terasa instan,
+// cukup besar supaya user jarang perlu scroll pagination.
+const PAGE_SIZE = 12;
+
+// Comparator sorting katalog (dipisah agar switch-case bersih di renderCatalog).
+const catalogComparators = {
+  related: () => 0,
+  popular: (a, b) => b.soldCount - a.soldCount,
+  'price-low': (a, b) => a.price - b.price,
+  'price-high': (a, b) => b.price - a.price,
+  rating: (a, b) => b.rating - a.rating
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   CustomerApp.init();
 });
@@ -12,19 +74,39 @@ const CustomerApp = {
   activeView: 'dasbor',
   currentCategoryFilter: 'all',
   currentSort: 'related',
+  currentPage: 1,
   priceMin: null,
   priceMax: null,
   ratingFilter: null,
   searchQuery: '',
   appliedVoucher: null,
 
+  // Peta view -> method renderer. Dipakai switchView() supaya tidak perlu
+  // rantai if/if dan mudah ditambah view baru.
+  VIEWS: {
+    dasbor: 'renderDasbor',
+    catalog: 'renderCatalog',
+    cart: 'renderCart',
+    checkout: 'renderCheckout',
+    orders: 'renderOrders',
+    tracking: 'renderTracking',
+    wishlist: 'renderWishlist',
+    reviews: 'renderReviews',
+    tips: 'renderTips',
+    profile: 'renderProfile'
+  },
+
+  // View yang data-nya berubah dan wajib di-render ulang walau belum pindah view.
+  dirtyViews: new Set(),
+
+  // View yang sudah pernah di-render. Mencegah render ulang saat user
+  // pindah ke view lain lalu kembali tanpa ada perubahan data.
+  renderedViews: {},
+
   init() {
     this.bindEvents();
     this.renderHeaderUserInfo();
     this.updateCartBadge();
-    this.renderDasbor();
-    this.renderCatalog();
-    this.renderTips();
 
     // Check URL parameters for direct view, product, or blocked admin attempt
     const urlParams = new URLSearchParams(window.location.search);
@@ -39,15 +121,28 @@ const CustomerApp = {
       }, 300);
     }
 
-    if (view) {
-      this.switchView(view);
-    } else {
-      this.switchView('dasbor');
-    }
+    // Hanya render view yang benar-benar dibuka. Semua view lain
+    // ditunda sampai pertama kali dinavigasi (lazy render).
+    this.switchView(view || 'dasbor', { force: true });
 
     if (productId) {
       this.openProductDetail(productId);
     }
+  },
+
+  // Tandai view perlu di-render ulang (dipanggil setelah data berubah).
+  invalidateView(viewName) {
+    if (viewName) {
+      this.dirtyViews.add(viewName);
+    } else {
+      this.dirtyViews.clear();
+    }
+  },
+
+  // Bersihkan cache render untuk semua view (dipakai setelah mutasi data besar,
+  // mis. checkout berhasil / admin mengubah produk).
+  invalidateAllViews() {
+    this.dirtyViews = new Set(Object.keys(this.VIEWS));
   },
 
   toggleMobileSidebar(force) {
@@ -80,9 +175,9 @@ const CustomerApp = {
         e.preventDefault();
         const input = document.getElementById('search-input') || document.getElementById('customer-search-input');
         if (input) {
-          this.searchQuery = input.value.trim();
-          this.switchView('catalog');
-          this.renderCatalog();
+          this.searchQuery = input.value.trim().toLowerCase();
+          this.currentPage = 1;
+          this.switchView('catalog', { force: true });
         }
       });
     }
@@ -104,8 +199,15 @@ const CustomerApp = {
     });
   },
 
+  // Debounce: kolom pencarian memicu oninput tiap ketikan. Menunda render
+  // 250ms supaya tidak render ulang katalog untuk setiap huruf.
   handleGlobalSearch(e) {
     const q = (e.target.value || '').toLowerCase().trim();
+    clearTimeout(this._searchTimer);
+    this._searchTimer = setTimeout(() => this._runSearch(q), 250);
+  },
+
+  _runSearch(q) {
     this.searchQuery = q;
 
     if (this.activeView === 'dasbor') {
@@ -137,26 +239,16 @@ const CustomerApp = {
     } else {
       const catalogInput = document.getElementById('catalog-search-input');
       if (catalogInput) catalogInput.value = q;
-      if (this.activeView !== 'catalog') {
-        this.switchView('catalog');
-      }
-      this.renderCatalog();
+      this.currentPage = 1;
+      // switchView sudah menangani render; tidak perlu renderCatalog() dua kali.
+      this.switchView('catalog', { force: true });
     }
   },
 
-  switchView(viewName) {
+  switchView(viewName, opts = {}) {
     if (viewName === 'logout') {
       if (confirm('Apakah Anda yakin ingin keluar dari akun?')) {
-        if (window.taniStore && typeof window.taniStore.logout === 'function') {
-          window.taniStore.logout();
-        } else {
-          localStorage.removeItem('tani_auth_session');
-        }
-        if (window.TaniAuth && typeof window.TaniAuth.logout === 'function') {
-          window.TaniAuth.logout('customer');
-        } else {
-          window.location.href = 'login-customer.html';
-        }
+        TaniAuth.logout('customer');
       }
       return;
     }
@@ -165,16 +257,13 @@ const CustomerApp = {
       viewName = 'dasbor';
     }
 
+    const isSameView = this.activeView === viewName;
     this.activeView = viewName;
     this.toggleMobileSidebar(false);
 
     // Update active nav link
     document.querySelectorAll('.customer-nav-item, .nav-item').forEach(item => {
-      if (item.getAttribute('data-view') === viewName) {
-        item.classList.add('active');
-      } else {
-        item.classList.remove('active');
-      }
+      item.classList.toggle('active', item.getAttribute('data-view') === viewName);
     });
 
     // Hide all views and show active view
@@ -185,20 +274,21 @@ const CustomerApp = {
     const target = document.getElementById(`view-${viewName}`);
     if (target) {
       target.classList.add('active');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (!isSameView || opts.force) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
 
-    // Refresh view-specific data
-    if (viewName === 'dasbor') this.renderDasbor();
-    if (viewName === 'catalog') this.renderCatalog();
-    if (viewName === 'cart') this.renderCart();
-    if (viewName === 'checkout') this.renderCheckout();
-    if (viewName === 'orders') this.renderOrders();
-    if (viewName === 'tracking') this.renderTracking();
-    if (viewName === 'wishlist') this.renderWishlist();
-    if (viewName === 'reviews') this.renderReviews();
-    if (viewName === 'tips') this.renderTips();
-    if (viewName === 'profile') this.renderProfile();
+    // Render hanya bila: pertama kali dibuka, data ditandai dirty, atau dipaksa.
+    const renderKey = this.VIEWS[viewName];
+    if (renderKey) {
+      const needsRender = opts.force || this.dirtyViews.has(viewName) || this.renderedViews[viewName] !== true;
+      if (needsRender) {
+        this.renderedViews[viewName] = true;
+        this.dirtyViews.delete(viewName);
+        this[renderKey]();
+      }
+    }
   },
 
   renderHeaderUserInfo() {
@@ -387,8 +477,8 @@ const CustomerApp = {
 
   filterByCategory(catId) {
     this.currentCategoryFilter = catId;
-    this.switchView('catalog');
-    this.renderCatalog();
+    this.currentPage = 1;
+    this.switchView('catalog', { force: true });
   },
 
   // ==========================================
@@ -415,74 +505,112 @@ const CustomerApp = {
       `;
     }
 
-    // Filtering
-    let filtered = products.filter(p => {
-      // Category
-      if (this.currentCategoryFilter !== 'all' && p.categoryId !== this.currentCategoryFilter) {
-        return false;
-      }
-      // Search
-      if (this.searchQuery) {
-        const q = this.searchQuery.toLowerCase();
-        const matchName = p.name.toLowerCase().includes(q);
-        const matchDesc = p.description && p.description.toLowerCase().includes(q);
-        const matchIng = p.activeIngredient && p.activeIngredient.toLowerCase().includes(q);
-        if (!matchName && !matchDesc && !matchIng) return false;
-      }
-      // Price range
-      if (this.priceMin !== null && p.price < this.priceMin) return false;
-      if (this.priceMax !== null && p.price > this.priceMax) return false;
-      // Rating
-      if (this.ratingFilter !== null && p.rating < this.ratingFilter) return false;
-      return true;
-    });
+    // Filtering + Sorting
+    const filtered = products
+      .filter(p => this._matchProduct(p))
+      .sort(catalogComparators[this.currentSort] || catalogComparators.related);
 
-    // Sorting
-    if (this.currentSort === 'popular') {
-      filtered.sort((a, b) => b.soldCount - a.soldCount);
-    } else if (this.currentSort === 'price-low') {
-      filtered.sort((a, b) => a.price - b.price);
-    } else if (this.currentSort === 'price-high') {
-      filtered.sort((a, b) => b.price - a.price);
-    } else if (this.currentSort === 'rating') {
-      filtered.sort((a, b) => b.rating - a.rating);
-    }
+    // Pagination: render sebagian produk per halaman agar DOM tidak membengkak
+    // dan navigasi antar halaman terasa ringan.
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    this.currentPage = Math.min(Math.max(1, this.currentPage || 1), totalPages);
+    const startIdx = (this.currentPage - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(startIdx, startIdx + PAGE_SIZE);
 
-    // Render Results
     const container = document.getElementById('catalog-products-grid');
     const countLabel = document.getElementById('catalog-result-count');
     if (countLabel) {
-      countLabel.textContent = `Menampilkan ${filtered.length} produk pertanian pilihan`;
+      countLabel.textContent = filtered.length > PAGE_SIZE
+        ? `Menampilkan ${startIdx + 1}-${startIdx + pageItems.length} dari ${filtered.length} produk pertanian pilihan`
+        : `Menampilkan ${filtered.length} produk pertanian pilihan`;
     }
 
     if (container) {
       if (filtered.length === 0) {
         container.innerHTML = `
-          <div style="grid-column: 1 / -1; padding: 48px; text-align: center; background: #FFF; border: 1px solid #E5E7EB; border-radius: 4px;">
-            <p style="font-weight: 600; font-size: 15px; color: #4B5563;">Tidak ditemukan sarana pertanian yang sesuai filter.</p>
-            <p style="font-size: 13px; color: #9CA3AF; margin-top: 6px;">Coba gunakan kata kunci lain seperti benih, pupuk, sprayer, atau reset filter harga.</p>
-            <button class="btn btn-secondary btn-sm" style="margin-top: 14px;" onclick="CustomerApp.resetCatalogFilters()">Reset Semua Filter</button>
+          <div class="catalog-empty">
+            <p class="catalog-empty-title">Tidak ditemukan sarana pertanian yang sesuai filter.</p>
+            <p class="catalog-empty-desc">Coba gunakan kata kunci lain seperti benih, pupuk, sprayer, atau reset filter harga.</p>
+            <button class="btn btn-secondary btn-sm catalog-empty-reset" onclick="CustomerApp.resetCatalogFilters()">Reset Semua Filter</button>
           </div>
         `;
       } else {
-        container.innerHTML = filtered.map(p => this.createProductCardHtml(p)).join('');
+        // Satu context dipakai seluruh kartu di halaman ini (lihat _buildCardContext).
+        const ctx = this._buildCardContext();
+        container.innerHTML = pageItems.map(p => this.createProductCardHtml(p, ctx)).join('');
       }
     }
+
+    this._renderCatalogPagination(filtered.length, totalPages);
+  },
+
+  _renderCatalogPagination(totalItems, totalPages) {
+    const pager = document.getElementById('catalog-pagination');
+    if (!pager) return;
+    if (totalPages <= 1) {
+      pager.innerHTML = '';
+      return;
+    }
+
+    const cur = this.currentPage;
+    const btn = (label, page, opts = {}) => `
+      <button class="page-btn ${opts.active ? 'active' : ''}" ${opts.disabled ? 'disabled' : ''}
+              onclick="CustomerApp.goToCatalogPage(${page})">${label}</button>
+    `;
+
+    // Tampilkan maksimal 5 nomor halaman di sekitar halaman aktif.
+    const span = 2;
+    const from = Math.max(1, cur - span);
+    const to = Math.min(totalPages, cur + span);
+    const pages = [btn('‹', cur - 1, { disabled: cur === 1 })];
+    if (from > 1) pages.push(btn('1', 1));
+    if (from > 2) pages.push('<span class="page-gap">…</span>');
+    for (let p = from; p <= to; p++) pages.push(btn(p, p, { active: p === cur }));
+    if (to < totalPages - 1) pages.push('<span class="page-gap">…</span>');
+    if (to < totalPages) pages.push(btn(totalPages, totalPages));
+    pages.push(btn('›', cur + 1, { disabled: cur === totalPages }));
+
+    pager.innerHTML = `
+      <span class="page-info">Halaman ${cur} dari ${totalPages} · ${totalItems} produk</span>
+      <div class="page-controls">${pages.join('')}</div>
+    `;
+  },
+
+  goToCatalogPage(page) {
+    this.currentPage = page;
+    this.renderCatalog();
+    const main = document.querySelector('.customer-main') || document.getElementById('view-catalog');
+    if (main) main.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+
+  // Predicate filter katalog (dipisah agar ringkas & mudah diuji).
+  _matchProduct(p) {
+    if (this.currentCategoryFilter !== 'all' && p.categoryId !== this.currentCategoryFilter) return false;
+    if (this.priceMin !== null && p.price < this.priceMin) return false;
+    if (this.priceMax !== null && p.price > this.priceMax) return false;
+    if (this.ratingFilter !== null && p.rating < this.ratingFilter) return false;
+
+    if (this.searchQuery) {
+      const q = this.searchQuery;
+      const matchName = p.name.toLowerCase().includes(q);
+      const matchDesc = p.description && p.description.toLowerCase().includes(q);
+      const matchIng = p.activeIngredient && p.activeIngredient.toLowerCase().includes(q);
+      if (!matchName && !matchDesc && !matchIng) return false;
+    }
+    return true;
   },
 
   setCatalogCat(catId) {
     this.currentCategoryFilter = catId;
+    this.currentPage = 1;
     this.renderCatalog();
   },
 
   setSort(sortType) {
     this.currentSort = sortType;
+    this.currentPage = 1;
     document.querySelectorAll('.sort-btn').forEach(b => {
-      if (b.getAttribute('data-sort') === sortType) {
-        b.classList.add('active');
-      } else {
-        b.classList.remove('active');
-      }
+      b.classList.toggle('active', b.getAttribute('data-sort') === sortType);
     });
     this.renderCatalog();
   },
@@ -490,13 +618,15 @@ const CustomerApp = {
   applyPriceFilter() {
     const minInput = document.getElementById('filter-price-min');
     const maxInput = document.getElementById('filter-price-max');
-    this.priceMin = minInput.value ? Number(minInput.value) : null;
-    this.priceMax = maxInput.value ? Number(maxInput.value) : null;
+    this.priceMin = minInput && minInput.value ? Number(minInput.value) : null;
+    this.priceMax = maxInput && maxInput.value ? Number(maxInput.value) : null;
+    this.currentPage = 1;
     this.renderCatalog();
   },
 
   applyRatingFilter(minRating) {
     this.ratingFilter = minRating;
+    this.currentPage = 1;
     this.renderCatalog();
   },
 
@@ -507,6 +637,7 @@ const CustomerApp = {
     this.priceMax = null;
     this.ratingFilter = null;
     this.currentSort = 'related';
+    this.currentPage = 1;
 
     const sInput = document.getElementById('search-input');
     if (sInput) sInput.value = '';
@@ -518,33 +649,28 @@ const CustomerApp = {
     this.renderCatalog();
   },
 
-  // Helper card generator
-  createProductCardHtml(product, isFlash = false) {
-    const isWished = window.taniStore.isWishlisted(product.id);
-    const discPercent = product.originalPrice && product.originalPrice > product.price
-      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-      : 0;
+  // Helper card generator.
+  // `ctx` (opsional) berisi nilai yang sama untuk seluruh kartu dalam satu render,
+  // supaya tidak dihitung ulang berkali-kali.
+  createProductCardHtml(product, ctx = null) {
+    const cache = ctx || this._buildCardContext();
+
+    const discPercent = discountPercent(product);
 
     let badgeClass = 'badge-orange';
     if (product.badge === 'Organik') badgeClass = 'badge-green';
     if (product.badge === 'Official') badgeClass = 'badge-blue';
 
-    const auth = window.taniStore.getAuth();
-    const tierInfo = window.taniStore.getTierInfo(auth ? auth.tier : 'silver');
-    const settings = window.taniStore.getMemberSettings();
-    const isBonusProduct = (settings.freeProductId === product.id);
+    const isBonusProduct = (cache.settings.freeProductId === product.id);
+    const estPoints = estimatePoints(product.price, cache.tierInfo, cache.settings);
 
-    // Hitung poin yang diperoleh dari produk ini
-    const estPoints = Math.floor((product.price / (Number(settings.pointsPerRupiah) || 10000)) * (tierInfo.pointsMultiplier || 1.0));
-
-    const fallbackImg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><rect width='300' height='300' fill='%232E7D32'/><text x='50%' y='46%' dominant-baseline='middle' text-anchor='middle' fill='%23FFFFFF' font-family='sans-serif' font-size='22' font-weight='bold'>Tani.SM</text><text x='50%' y='60%' dominant-baseline='middle' text-anchor='middle' fill='%23A7F3D0' font-family='sans-serif' font-size='14'>Sarana Pertanian</text></svg>";
     return `
       <div class="product-card" onclick="CustomerApp.openProductDetail('${product.id}')">
         <div class="product-card-image-wrap">
-          <img src="${product.image}" alt="${product.name}" class="product-card-image" loading="lazy" onerror="this.src='${fallbackImg}'">
+          <img src="${product.image}" alt="${product.name}" class="product-card-image" loading="lazy" decoding="async" onerror="this.src='${FALLBACK_IMAGE}'">
           ${product.badge ? `<span class="badge ${badgeClass} product-card-badge">${product.badge}</span>` : ''}
-          ${isBonusProduct ? `<span class="badge" style="position:absolute; top:8px; left:8px; background:#0284C7; color:#FFF; font-size:10px;">🎁 Bonus Platinum</span>` : ''}
-          ${discPercent > 0 ? `<span class="badge badge-orange" style="position:absolute; top:8px; right:8px;">-${discPercent}%</span>` : ''}
+          ${isBonusProduct ? `<span class="badge product-card-bonus-badge">🎁 Bonus Platinum</span>` : ''}
+          ${discPercent > 0 ? `<span class="badge badge-orange product-card-disc-badge">-${discPercent}%</span>` : ''}
         </div>
         <div class="product-card-body">
           <h4 class="product-card-title">${product.name}</h4>
@@ -554,17 +680,27 @@ const CustomerApp = {
             ${product.originalPrice && product.originalPrice > product.price ? `<span class="product-card-strike">${window.taniStore.formatRupiah(product.originalPrice)}</span>` : ''}
           </div>
           ${product.memberPrice ? `
-            <div style="font-size: 11px; color: #10B981; font-weight: 700; margin-top: 2px;">
+            <div class="product-card-member-price">
               🏷️ Member: ${window.taniStore.formatRupiah(product.memberPrice)}
             </div>
           ` : ''}
           <div class="product-card-meta">
-            <span style="color:#D97706; font-weight:600;">★ ${product.rating} (${product.soldCount} terjual)</span>
-            <span style="color:#10B981; font-size:11px; font-weight:600;">+${estPoints} Poin</span>
+            <span class="product-card-rating">★ ${product.rating} (${product.soldCount} terjual)</span>
+            <span class="product-card-points">+${estPoints} Poin</span>
           </div>
         </div>
       </div>
     `;
+  },
+
+  // Nilai bersama untuk seluruh kartu produk dalam satu siklus render.
+  _buildCardContext() {
+    const auth = window.taniStore.getAuth();
+    return {
+      tierInfo: window.taniStore.getTierInfo(auth ? auth.tier : 'silver'),
+      settings: window.taniStore.getMemberSettings(),
+      wishlist: new Set(window.taniStore.getWishlist())
+    };
   },
 
   // ==========================================
@@ -579,14 +715,12 @@ const CustomerApp = {
 
     const modalContent = document.getElementById('modal-detail-content');
     const isWished = window.taniStore.isWishlisted(product.id);
-    const discPercent = product.originalPrice && product.originalPrice > product.price
-      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-      : 0;
+    const discPercent = discountPercent(product);
 
-    const auth = window.taniStore.getAuth();
-    const tierInfo = window.taniStore.getTierInfo(auth ? auth.tier : 'silver');
-    const settings = window.taniStore.getMemberSettings();
-    const estPoints = Math.floor((product.price / (Number(settings.pointsPerRupiah) || 10000)) * (tierInfo.pointsMultiplier || 1.0));
+    const cache = this._buildCardContext();
+    const tierInfo = cache.tierInfo;
+    const settings = cache.settings;
+    const estPoints = estimatePoints(product.price, tierInfo, settings);
     const isBonusProduct = (settings.freeProductId === product.id);
 
     const reviews = window.taniStore.getReviews().filter(r => r.productId === product.id);
@@ -595,7 +729,7 @@ const CustomerApp = {
       <div class="detail-grid">
         <div>
           <div class="detail-img-box">
-            <img src="${product.image}" alt="${product.name}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'300\' viewBox=\'0 0 300 300\'><rect width=\'300\' height=\'300\' fill=\'%232E7D32\'/><text x=\'50%\' y=\'46%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%23FFFFFF\' font-family=\'sans-serif\' font-size=\'22\' font-weight=\'bold\'>Tani.SM</text><text x=\'50%\' y=\'60%\' dominant-baseline=\'middle\' text-anchor=\'middle\' fill=\'%23A7F3D0\' font-family=\'sans-serif\' font-size=\'14\'>Sarana Pertanian</text></svg>'">
+            <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async" onerror="this.src='${FALLBACK_IMAGE}'">
           </div>
           <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
             <button class="btn btn-secondary btn-sm" onclick="CustomerApp.toggleWishlist('${product.id}')">
@@ -735,6 +869,7 @@ const CustomerApp = {
 
     window.taniStore.addToCart(productId, qty);
     this.updateCartBadge();
+    this.invalidateView('cart');
     this.closeAllModals();
 
     if (directCheckout) {
@@ -773,16 +908,12 @@ const CustomerApp = {
       return;
     }
 
-    let subtotal = 0;
-    let totalWeight = 0;
     const selectedCart = cart.filter(item => item.selected !== false);
+    // Subtotal & berat hanya dari item yang dicentang.
+    const { subtotal, totalWeight } = sumCart(selectedCart);
 
     const rowsHtml = cart.map(item => {
       const lineTotal = item.price * item.qty;
-      if (item.selected !== false) {
-        subtotal += lineTotal;
-        totalWeight += (item.weightGram || 1000) * item.qty;
-      }
 
       return `
         <tr>
@@ -883,17 +1014,7 @@ const CustomerApp = {
     `;
 
     // Apply Voucher Calculation
-    let voucherDiscount = 0;
-    if (this.appliedVoucher) {
-      if (this.appliedVoucher.discountFlat) {
-        voucherDiscount = this.appliedVoucher.discountFlat;
-      } else if (this.appliedVoucher.discountPercent) {
-        voucherDiscount = (subtotal * this.appliedVoucher.discountPercent) / 100;
-        if (this.appliedVoucher.maxDiscount && voucherDiscount > this.appliedVoucher.maxDiscount) {
-          voucherDiscount = this.appliedVoucher.maxDiscount;
-        }
-      }
-    }
+    const voucherDiscount = calcVoucherDiscount(this.appliedVoucher, subtotal);
 
     const tierDiscount = memberBenefits ? memberBenefits.tierDiscount : 0;
     const finalTotal = Math.max(0, subtotal - voucherDiscount - tierDiscount);
@@ -916,13 +1037,17 @@ const CustomerApp = {
   updateCartQty(productId, newQty) {
     window.taniStore.updateCartQty(productId, newQty);
     this.updateCartBadge();
-    this.renderCart();
+    this.invalidateView('cart');
+    this.invalidateView('checkout');
+    if (this.activeView === 'cart') this.renderCart();
   },
 
   removeFromCart(productId) {
     window.taniStore.removeFromCart(productId);
     this.updateCartBadge();
-    this.renderCart();
+    this.invalidateView('cart');
+    this.invalidateView('checkout');
+    if (this.activeView === 'cart') this.renderCart();
     TaniAuth.showToast('Item berhasil dihapus dari keranjang', 'info');
   },
 
@@ -931,7 +1056,8 @@ const CustomerApp = {
     const item = cart.find(i => i.productId === productId);
     if (item) {
       item.selected = isSelected;
-      localStorage.setItem(window.taniStore.STORAGE_KEYS.CART, JSON.stringify(cart));
+      window.taniStore.saveCart(cart);
+      this.invalidateView('checkout');
       this.renderCart();
     }
   },
@@ -939,7 +1065,8 @@ const CustomerApp = {
   toggleCartAll(isSelected) {
     const cart = window.taniStore.getCart();
     cart.forEach(item => item.selected = isSelected);
-    localStorage.setItem(window.taniStore.STORAGE_KEYS.CART, JSON.stringify(cart));
+    window.taniStore.saveCart(cart);
+    this.invalidateView('checkout');
     this.renderCart();
   },
 
@@ -962,6 +1089,7 @@ const CustomerApp = {
 
     this.appliedVoucher = found;
     TaniAuth.showToast(`Kupon ${found.code} (${found.name}) berhasil diterapkan!`, 'success');
+    this.invalidateView('checkout');
     this.renderCart();
   },
 
@@ -987,12 +1115,7 @@ const CustomerApp = {
     if (nameField && auth) nameField.value = auth.name || 'Budi Santoso';
     if (phoneField && auth) phoneField.value = auth.phone || '0812-3456-7890';
 
-    let subtotal = 0;
-    let totalWeight = 0;
-    cart.forEach(item => {
-      subtotal += item.price * item.qty;
-      totalWeight += (item.weightGram || 1000) * item.qty;
-    });
+    const { subtotal, totalWeight } = sumCart(cart);
 
     const memberBenefits = auth ? window.taniStore.calculateOrderMemberBenefits(auth.id, cart, subtotal) : null;
 
@@ -1037,21 +1160,10 @@ const CustomerApp = {
     // Shipping calculation
     const courierSelect = document.querySelector('input[name="checkout-courier"]:checked');
     const courierRate = courierSelect ? Number(courierSelect.getAttribute('data-rate') || 25000) : 25000;
-    const kg = Math.ceil(totalWeight / 1000);
-    const shippingCost = Math.max(courierRate, courierRate + (kg - 1) * 3000);
+    const shippingCost = calcShipping(totalWeight, courierRate);
 
     // Voucher
-    let voucherDiscount = 0;
-    if (this.appliedVoucher) {
-      if (this.appliedVoucher.discountFlat) {
-        voucherDiscount = this.appliedVoucher.discountFlat;
-      } else if (this.appliedVoucher.discountPercent) {
-        voucherDiscount = (subtotal * this.appliedVoucher.discountPercent) / 100;
-        if (this.appliedVoucher.maxDiscount && voucherDiscount > this.appliedVoucher.maxDiscount) {
-          voucherDiscount = this.appliedVoucher.maxDiscount;
-        }
-      }
-    }
+    const voucherDiscount = calcVoucherDiscount(this.appliedVoucher, subtotal);
 
     const tierDiscount = memberBenefits ? memberBenefits.tierDiscount : 0;
     const totalDiscount = voucherDiscount + tierDiscount;
@@ -1098,30 +1210,13 @@ const CustomerApp = {
     const paymentMethod = paymentRadio ? paymentRadio.value : 'Transfer Mandiri (Virtual Account)';
 
     // Compute totals
-    let subtotal = 0;
-    let totalWeight = 0;
-    cart.forEach(i => {
-      subtotal += i.price * i.qty;
-      totalWeight += (i.weightGram || 1000) * i.qty;
-    });
+    const { subtotal, totalWeight } = sumCart(cart);
 
     const memberBenefits = auth ? window.taniStore.calculateOrderMemberBenefits(auth.id, cart, subtotal) : null;
 
     const courierRate = courierRadio ? Number(courierRadio.getAttribute('data-rate') || 25000) : 25000;
-    const kg = Math.ceil(totalWeight / 1000);
-    const shippingCost = Math.max(courierRate, courierRate + (kg - 1) * 3000);
-
-    let voucherDiscount = 0;
-    if (this.appliedVoucher) {
-      if (this.appliedVoucher.discountFlat) {
-        voucherDiscount = this.appliedVoucher.discountFlat;
-      } else if (this.appliedVoucher.discountPercent) {
-        voucherDiscount = (subtotal * this.appliedVoucher.discountPercent) / 100;
-        if (this.appliedVoucher.maxDiscount && voucherDiscount > this.appliedVoucher.maxDiscount) {
-          voucherDiscount = this.appliedVoucher.maxDiscount;
-        }
-      }
-    }
+    const shippingCost = calcShipping(totalWeight, courierRate);
+    const voucherDiscount = calcVoucherDiscount(this.appliedVoucher, subtotal);
 
     const tierDiscount = memberBenefits ? memberBenefits.tierDiscount : 0;
     const grandTotal = Math.max(0, subtotal + shippingCost - voucherDiscount - tierDiscount);
@@ -1204,6 +1299,7 @@ const CustomerApp = {
     this.appliedVoucher = null;
     this.updateCartBadge();
     this.renderHeaderUserInfo();
+    this.invalidateAllViews();
 
     TaniAuth.showToast(`Pesanan ${orderId} berhasil dibuat! Segera diproses oleh Admin Gudang.`, 'success');
     this.openTrackingForOrder(orderId);
@@ -1391,7 +1487,7 @@ const CustomerApp = {
       TaniAuth.showToast('Pesanan tidak ditemukan', 'error');
       return;
     }
-    this.switchView('tracking');
+    this.switchView('tracking', { force: true });
     this.renderTracking(order);
   },
 
@@ -1787,6 +1883,8 @@ const CustomerApp = {
     const isNowWished = window.taniStore.toggleWishlist(productId);
     TaniAuth.showToast(isNowWished ? 'Produk disimpan ke Wishlist' : 'Produk dihapus dari Wishlist', 'info');
 
+    this.invalidateView('wishlist');
+
     const modal = document.getElementById('modal-product-detail');
     if (modal && modal.classList.contains('active')) {
       this.openProductDetail(productId);
@@ -1869,6 +1967,8 @@ const CustomerApp = {
     window.taniStore.addReview(review);
     this.closeAllModals();
     TaniAuth.showToast('Ulasan berhasil dikirim!', 'success');
+    this.invalidateView('reviews');
+    this.invalidateView('dasbor');
     this.renderReviews();
   },
 
@@ -1993,6 +2093,8 @@ const CustomerApp = {
     window.taniStore.setAuth(updated);
     window.taniStore.saveCustomer(updated);
     this.renderHeaderUserInfo();
+    this.invalidateView('profile');
+    this.invalidateView('dasbor');
     this.renderProfile();
     TaniAuth.showToast('Data profil petani & keanggotaan berhasil diperbarui!', 'success');
   },

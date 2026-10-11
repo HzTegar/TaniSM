@@ -11,10 +11,31 @@ document.addEventListener('DOMContentLoaded', () => {
 const AdminApp = {
   activeView: 'dasbor',
 
+  // Peta view -> method renderer (mengganti rangkaian if/if di switchView).
+  VIEWS: {
+    dasbor: 'renderDasbor',
+    pelanggan: 'renderPelanggan',
+    produk: 'renderProduk',
+    kategori: 'renderKategori',
+    stok: 'renderStok',
+    pemesanan: 'renderPemesanan',
+    pembayaran: 'renderPembayaran',
+    pengiriman: 'renderPengiriman',
+    konten: 'renderKonten',
+    promo: 'renderPromo',
+    laporan: 'renderLaporan'
+  },
+
+  // View yang wajib di-render ulang setelah data berubah.
+  dirtyViews: new Set(),
+
+  // View yang sudah pernah di-render (lazy render).
+  renderedViews: {},
+
   init() {
     this.bindEvents();
     this.renderHeaderUserInfo();
-    this.switchView('dasbor');
+    this.switchView('dasbor', { force: true });
   },
 
   bindEvents() {
@@ -72,7 +93,7 @@ const AdminApp = {
     }
   },
 
-  switchView(viewName) {
+  switchView(viewName, opts = {}) {
     if (viewName === 'logout') {
       this.logout();
       return;
@@ -115,18 +136,31 @@ const AdminApp = {
       target.classList.add('active');
     }
 
-    // Call renderers
-    if (viewName === 'dasbor') this.renderDasbor();
-    if (viewName === 'pelanggan') this.renderPelanggan();
-    if (viewName === 'produk') this.renderProduk();
-    if (viewName === 'kategori') this.renderKategori();
-    if (viewName === 'stok') this.renderStok();
-    if (viewName === 'pemesanan') this.renderPemesanan();
-    if (viewName === 'pembayaran') this.renderPembayaran();
-    if (viewName === 'pengiriman') this.renderPengiriman();
-    if (viewName === 'konten') this.renderKonten();
-    if (viewName === 'promo') this.renderPromo();
-    if (viewName === 'laporan') this.renderLaporan();
+    // Call renderers — hanya saat view benar-benar perlu (belum pernah dirender,
+    // ditandai dirty, atau dipaksa). Mencegah render ulang saat user
+    // berpindah-pindah menu tanpa perubahan data.
+    const renderKey = this.VIEWS[viewName];
+    if (renderKey) {
+      const needsRender = opts.force || this.dirtyViews.has(viewName) || this.renderedViews[viewName] !== true;
+      if (needsRender) {
+        this.renderedViews[viewName] = true;
+        this.dirtyViews.delete(viewName);
+        this[renderKey]();
+      }
+    }
+  },
+
+  // Tandai view perlu di-render ulang setelah data berubah.
+  invalidateView(viewName) {
+    if (viewName) {
+      this.dirtyViews.add(viewName);
+    } else {
+      this.dirtyViews.clear();
+    }
+  },
+
+  invalidateAllViews() {
+    this.dirtyViews = new Set(Object.keys(this.VIEWS));
   },
 
   renderHeaderUserInfo() {
@@ -138,8 +172,14 @@ const AdminApp = {
     if (nameSide) nameSide.textContent = displayName;
   },
 
+  // Debounce: input memicu oninput tiap ketikan.
   handleGlobalSearch(e) {
     const q = (e.target.value || '').toLowerCase().trim();
+    clearTimeout(this._searchTimer);
+    this._searchTimer = setTimeout(() => this._runSearch(q), 250);
+  },
+
+  _runSearch(q) {
     if (!q) {
       if (this.activeView === 'dasbor') {
         this.renderDasbor();
@@ -336,6 +376,7 @@ const AdminApp = {
     const results = window.taniStore.evaluateAllCustomers();
     const changed = results.filter(r => r.isChanged);
     const upgraded = results.filter(r => r.isUpgraded);
+    this.invalidateAllViews();
     this.renderPelanggan();
     TaniAuth.showToast(`Evaluasi berkala selesai! Total ${results.length} pelanggan dievaluasi, ${upgraded.length} naik level, total ${changed.length} penyesuaian tier.`, 'success');
   },
@@ -409,6 +450,7 @@ const AdminApp = {
 
     window.taniStore.saveMemberSettings(updated);
     TaniAuth.showToast('Aturan level member & benefit berhasil diperbarui!', 'success');
+    this.invalidateAllViews();
     this.renderPelanggan();
   },
 
@@ -416,6 +458,7 @@ const AdminApp = {
     if (confirm('Kembalikan aturan level member ke pengaturan bawaan awal?')) {
       window.taniStore.saveMemberSettings(SEED_DATA.memberSettings);
       this.renderMemberSettingsForm();
+      this.invalidateAllViews();
       this.renderPelanggan();
       TaniAuth.showToast('Pengaturan aturan member telah direset ke default', 'info');
     }
@@ -468,6 +511,7 @@ const AdminApp = {
 
     this.closeAllModals();
     TaniAuth.showToast(`Level & Poin ${cust.name} berhasil diperbarui menjadi ${newTier.toUpperCase()}!`, 'success');
+    this.invalidateAllViews();
     this.renderPelanggan();
   },
 
@@ -525,6 +569,7 @@ const AdminApp = {
     window.taniStore.saveCustomer(customer);
     this.closeAllModals();
     TaniAuth.showToast('Data pelanggan tani berhasil disimpan', 'success');
+    this.invalidateAllViews();
     this.renderPelanggan();
   },
 
@@ -720,6 +765,7 @@ const AdminApp = {
     window.taniStore.saveProduct(product);
     this.closeAllModals();
     TaniAuth.showToast(`Produk "${product.name}" berhasil disimpan ke sistem inventaris`, 'success');
+    this.invalidateAllViews();
     this.renderProduk();
     this.renderStok();
   },
@@ -728,6 +774,7 @@ const AdminApp = {
     if (confirm('Yakin ingin menghapus produk ini dari master data gudang?')) {
       window.taniStore.deleteProduct(id);
       TaniAuth.showToast('Produk telah dihapus', 'info');
+      this.invalidateAllViews();
       this.renderProduk();
       this.renderStok();
     }
@@ -794,6 +841,8 @@ const AdminApp = {
     window.taniStore.saveCategory(cat);
     this.closeAllModals();
     TaniAuth.showToast('Kategori berhasil disimpan', 'success');
+    this.invalidateView('kategori');
+    this.invalidateView('produk');
     this.renderKategori();
   },
 
@@ -801,6 +850,7 @@ const AdminApp = {
     if (confirm('Hapus kategori ini?')) {
       window.taniStore.deleteCategory(id);
       TaniAuth.showToast('Kategori telah dihapus', 'info');
+      this.invalidateView('kategori');
       this.renderKategori();
     }
   },
@@ -884,6 +934,9 @@ const AdminApp = {
 
     this.closeAllModals();
     TaniAuth.showToast(`Stok berhasil disesuaikan (${delta > 0 ? '+' : ''}${delta})`, 'success');
+    this.invalidateView('stok');
+    this.invalidateView('dasbor');
+    this.invalidateView('produk');
     this.renderStok();
     this.renderDasbor();
   },
@@ -940,6 +993,9 @@ const AdminApp = {
     window.taniStore.updateOrderStatus(orderId, newStatus, note || `Status diperbarui menjadi ${newStatus}`);
     this.closeAllModals();
     TaniAuth.showToast(`Status pesanan ${orderId} berhasil diubah ke ${newStatus}`, 'success');
+    this.invalidateView('pemesanan');
+    this.invalidateView('dasbor');
+    this.invalidateView('pengiriman');
     this.renderPemesanan();
     this.renderDasbor();
   },
@@ -1090,6 +1146,9 @@ const AdminApp = {
     if (confirm(`Verifikasi pembayaran pesanan ${orderId} sebagai LUNAS?`)) {
       window.taniStore.updateOrderStatus(orderId, 'Diproses Gudang', 'Pembayaran telah diverifikasi sah oleh Admin Keuangan Gudang.', 'Lunas');
       TaniAuth.showToast(`Pesanan ${orderId} telah diverifikasi Lunas!`, 'success');
+      this.invalidateView('pembayaran');
+      this.invalidateView('pemesanan');
+      this.invalidateView('dasbor');
       this.renderPembayaran();
       this.renderDasbor();
       this.renderPemesanan();
@@ -1152,6 +1211,8 @@ const AdminApp = {
       window.taniStore.saveOrder(order);
       this.closeAllModals();
       TaniAuth.showToast(`Nomor resi & logistik untuk ${orderId} berhasil diperbarui`, 'success');
+      this.invalidateView('pengiriman');
+      this.invalidateView('pemesanan');
       this.renderPengiriman();
     }
   },
@@ -1230,6 +1291,7 @@ const AdminApp = {
     window.taniStore.saveTip(tip);
     this.closeAllModals();
     TaniAuth.showToast('Artikel edukasi tips tani berhasil disimpan!', 'success');
+    this.invalidateView('konten');
     this.renderKonten();
   },
 
@@ -1237,6 +1299,7 @@ const AdminApp = {
     if (confirm('Hapus artikel tips ini?')) {
       window.taniStore.deleteTip(id);
       TaniAuth.showToast('Artikel telah dihapus', 'info');
+      this.invalidateView('konten');
       this.renderKonten();
     }
   },
@@ -1302,6 +1365,7 @@ const AdminApp = {
     window.taniStore.saveVoucher(voucher);
     this.closeAllModals();
     TaniAuth.showToast(`Kupon diskon ${code} berhasil dibuat!`, 'success');
+    this.invalidateView('promo');
     this.renderPromo();
   },
 
@@ -1311,6 +1375,7 @@ const AdminApp = {
     if (v) {
       v.active = !v.active;
       window.taniStore.saveVoucher(v);
+      this.invalidateView('promo');
       this.renderPromo();
     }
   },

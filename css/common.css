@@ -3,6 +3,12 @@
    Karakter: E-Commerce Pertanian Nyata, Bersih, Fungsional (Tanpa AI-Slop)
    ========================================================================== */
 
+/* Sembunyikan konten admin selagi guard izin akses berjalan
+   (kelas ditambahkan js/guard-admin.js bila akses ditolak). */
+html.access-denied-pending body {
+  display: none !important;
+}
+
 :root {
   --primary-orange: #EE4D2D;
   --primary-orange-hover: #d73211;
