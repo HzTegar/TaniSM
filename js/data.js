@@ -20,6 +20,8 @@ const SEED_DATA = {
       categoryId: 'cat-1',
       price: 95000,
       originalPrice: 115000,
+      memberPrice: 89000,
+      eligibleForTierDiscount: true,
       stock: 450,
       unit: 'Karung 5 Kg',
       minStockWarning: 50,
@@ -62,6 +64,8 @@ const SEED_DATA = {
       categoryId: 'cat-2',
       price: 185000,
       originalPrice: 205000,
+      memberPrice: 175000,
+      eligibleForTierDiscount: true,
       stock: 620,
       unit: 'Zak 5 Kg (Repack Pabrik Segel)',
       minStockWarning: 80,
@@ -364,6 +368,9 @@ const SEED_DATA = {
       komoditasUtama: 'Padi & Cabai Rawit',
       totalOrders: 6,
       totalSpent: 1240000,
+      periodSpent: 1240000,
+      tier: 'silver',
+      points: 124,
       status: 'Aktif'
     },
     {
@@ -377,6 +384,9 @@ const SEED_DATA = {
       komoditasUtama: 'Melon Golden & Sayur Hidroponik',
       totalOrders: 8,
       totalSpent: 890000,
+      periodSpent: 890000,
+      tier: 'silver',
+      points: 89,
       status: 'Aktif'
     },
     {
@@ -390,6 +400,9 @@ const SEED_DATA = {
       komoditasUtama: 'Bawang Merah & Jagung',
       totalOrders: 11,
       totalSpent: 4750000,
+      periodSpent: 4750000,
+      tier: 'gold',
+      points: 712,
       status: 'VIP'
     },
     {
@@ -403,7 +416,26 @@ const SEED_DATA = {
       komoditasUtama: 'Hortikultura & Sayuran Dataran Tinggi',
       totalOrders: 4,
       totalSpent: 920000,
+      periodSpent: 920000,
+      tier: 'silver',
+      points: 92,
       status: 'Aktif'
+    },
+    {
+      id: 'CST-005',
+      name: 'Haji Sudirman',
+      phone: '0811-2233-4455',
+      email: 'h.sudirman.agri@gmail.com',
+      kelompokTani: 'Gapoktan Tani Makmur Berkah (Semarang)',
+      address: 'Jl. Raya Agro No. 88, Kec. Ambarawa, Kab. Semarang, Jawa Tengah 50614',
+      lahanHa: 5.0,
+      komoditasUtama: 'Padi Organik & Palawija',
+      totalOrders: 16,
+      totalSpent: 6800000,
+      periodSpent: 6800000,
+      tier: 'platinum',
+      points: 1360,
+      status: 'VIP'
     }
   ],
 
@@ -519,10 +551,14 @@ const SEED_DATA = {
   ],
 
   vouchers: [
-    { code: 'PANENRAYA', name: 'Kupon Musim Panen Raya', discountPercent: 15, maxDiscount: 40000, minSpend: 150000, quota: 150, used: 64, active: true },
-    { code: 'SUBSIDIPUPUK', name: 'Potongan Khusus Pupuk & Nutrisi', discountFlat: 30000, minSpend: 200000, quota: 200, used: 112, active: true },
-    { code: 'GRATISONGKIR', name: 'Subsidi Ongkir Kargo Seluruh Jawa', discountFlat: 25000, minSpend: 100000, quota: 500, used: 387, active: true },
-    { code: 'BIBITUNGGUL', name: 'Cashback Benih Bersertifikat 10%', discountPercent: 10, maxDiscount: 25000, minSpend: 80000, quota: 100, used: 41, active: true }
+    { code: 'PANENRAYA', name: 'Kupon Musim Panen Raya', discountPercent: 15, maxDiscount: 40000, minSpend: 150000, quota: 150, used: 64, tierRequired: 'all', active: true },
+    { code: 'SUBSIDIPUPUK', name: 'Potongan Khusus Pupuk & Nutrisi', discountFlat: 30000, minSpend: 200000, quota: 200, used: 112, tierRequired: 'all', active: true },
+    { code: 'GRATISONGKIR', name: 'Subsidi Ongkir Kargo Seluruh Jawa', discountFlat: 25000, minSpend: 100000, quota: 500, used: 387, tierRequired: 'all', active: true },
+    { code: 'BIBITUNGGUL', name: 'Cashback Benih Bersertifikat 10%', discountPercent: 10, maxDiscount: 25000, minSpend: 80000, quota: 100, used: 41, tierRequired: 'all', active: true },
+    { code: 'MEMBERSILVER', name: 'Voucher Spesial Member Baru (Silver)', discountFlat: 15000, minSpend: 100000, quota: 300, used: 24, tierRequired: 'silver', active: true },
+    { code: 'GOLDEKSKLUSIF', name: 'Voucher Eksklusif Member Gold (Diskon 7%)', discountPercent: 7, maxDiscount: 50000, minSpend: 250000, quota: 100, used: 18, tierRequired: 'gold', active: true },
+    { code: 'PLATINUMVIP', name: 'Voucher Eksklusif Member Platinum (Diskon 12%)', discountPercent: 12, maxDiscount: 100000, minSpend: 400000, quota: 50, used: 8, tierRequired: 'platinum', active: true },
+    { code: 'EARLYACCESS', name: 'Early Access Promo Pra-Musim (Gold & Platinum)', discountFlat: 50000, minSpend: 350000, quota: 80, used: 14, tierRequired: 'gold', active: true }
   ],
 
   tips: [
@@ -655,5 +691,25 @@ const SEED_DATA = {
       btnText: 'Cek Alat Pertanian',
       catTarget: 'cat-4'
     }
-  ]
+  ],
+
+  memberSettings: {
+    evaluationPeriodDays: 90,
+    pointsPerRupiah: 10000,
+    maxDiscountCap: 150000,
+    // Threshold kenaikan level (dalam periode evaluasi)
+    goldMinSpend: 1500000,
+    platinumMinSpend: 5000000,
+    // Diskon persentase untuk produk yang memenuhi syarat
+    goldDiscountPercent: 5,
+    platinumDiscountPercent: 10,
+    // Poin Multiplier
+    pointsMultiplierSilver: 1.0,
+    pointsMultiplierGold: 1.5,
+    pointsMultiplierPlatinum: 2.0,
+    // Aturan Free Product / Bonus Platinum (TIDAK gratis tanpa batas, bersyarat & 1 unit promo terpilih)
+    freeProductMinSpend: 500000,
+    freeProductId: 'PRD-012',
+    freeProductQty: 1
+  }
 };

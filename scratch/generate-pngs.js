@@ -12,7 +12,7 @@ function crc32(buf) {
   let crc = 0 ^ (-1);
   for (let i = 0; i < buf.length; i++) crc = (crc >>> 8) ^ table[(crc ^ buf[i]) & 0xFF];
   return (crc ^ (-1)) >>> 0;
-}
+}   
 
 function makeChunk(type, data) {
   const len = Buffer.alloc(4);

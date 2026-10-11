@@ -1105,3 +1105,109 @@ body {
     padding: 0;
   }
 }
+
+/* ==========================================================================
+   MEMBERSHIP & AUTOMATIC TRACKING STYLING
+   ========================================================================== */
+.member-tier-pill, .badge-tier-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.tier-silver {
+  background: linear-gradient(135deg, rgba(51, 65, 85, 0.9), rgba(30, 41, 59, 0.9));
+  border: 1px solid #94A3B8;
+  color: #E2E8F0 !important;
+  box-shadow: 0 0 10px rgba(148, 163, 184, 0.25);
+}
+
+.tier-gold {
+  background: linear-gradient(135deg, rgba(180, 83, 9, 0.9), rgba(120, 53, 15, 0.9));
+  border: 1px solid #F59E0B;
+  color: #FEF3C7 !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+}
+
+.tier-platinum {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.9), rgba(3, 105, 161, 0.9));
+  border: 1px solid #38BDF8;
+  color: #E0F2FE !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+}
+
+.perk-chip {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #A7F3D0;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* Automatic Tracking Tabs */
+.tracking-order-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.tracking-order-tab {
+  background: #04160E;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.tracking-order-tab:hover {
+  border-color: #10B981;
+  background: #062817;
+  transform: translateY(-1px);
+}
+
+.tracking-order-tab.active {
+  border: 2px solid #34D399;
+  background: linear-gradient(135deg, rgba(6, 40, 23, 0.95), rgba(4, 22, 14, 0.95));
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.3);
+}
+
+/* Print Invoice Sheet */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #modal-customer-invoice, #modal-customer-invoice * {
+    visibility: visible;
+  }
+  #modal-customer-invoice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent !important;
+  }
+  .modal-box {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

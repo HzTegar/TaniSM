@@ -103,10 +103,10 @@
           <span>Ulasan</span>
         </div>
 
-        <!-- 9. Pendidikan -->
+        <!-- 9. Edukasi -->
         <div class="customer-nav-item" data-view="tips">
           <svg viewBox="0 0 24 24"><path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/></svg>
-          <span>Pendidikan</span>
+          <span>Edukasi</span>
         </div>
 
         <!-- 10. Profil -->
@@ -149,10 +149,16 @@
             <span>Pasang Aplikasi</span>
           </button>
 
-          <div class="customer-topbar-profile">
+          <div class="customer-topbar-profile" onclick="CustomerApp.openMemberBenefitsModal()" style="cursor: pointer;" title="Klik untuk melihat Detail Benefit Member">
             <div class="customer-profile-text">
-              <div class="customer-profile-name" id="customer-top-user-name">customer</div>
-              <div class="customer-profile-role" id="customer-top-user-role">Customer</div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="customer-profile-name" id="customer-top-user-name">customer</span>
+                <span id="customer-tier-badge" class="member-tier-pill">🥈 Silver</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                <span class="customer-profile-role" id="customer-top-user-role">Customer</span>
+                <span id="customer-points-badge" class="member-points-pill">124 Poin</span>
+              </div>
             </div>
             <div class="customer-avatar-circle" title="Customer">
               <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
@@ -171,6 +177,51 @@
           <div class="hero-welcome-card">
             <h1 class="hero-welcome-title">Selamat datang di TANIHUB 🌱</h1>
             <p class="hero-welcome-sub">Kelola pertanian, stok, produk, pesanan, dan penjualan dalam satu ekosistem digital futuristik.</p>
+          </div>
+
+          <!-- Kartu Keanggotaan & Loyalty Member (Silver, Gold, Platinum) -->
+          <div class="member-hero-card" id="customer-member-card">
+            <div class="member-card-content">
+              <div class="member-card-top">
+                <div class="member-tier-brand">
+                  <div class="member-badge-icon" id="cust-card-tier-badge">🥈</div>
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span class="member-card-level" id="cust-card-tier-name">MEMBER SILVER</span>
+                      <span class="badge badge-green" style="font-size: 10px; padding: 2px 6px;">Aktif</span>
+                    </div>
+                    <div class="member-card-status">Status Keanggotaan Resmi Petani Mitra Tani.SM</div>
+                  </div>
+                </div>
+                <div class="member-points-box">
+                  <div class="member-points-label">Total Poin Petani</div>
+                  <div class="member-points-value" id="cust-card-points">124 Poin</div>
+                </div>
+              </div>
+
+              <!-- Level Progress Bar -->
+              <div class="member-progress-wrap">
+                <div class="member-progress-labels">
+                  <span id="cust-card-progress-text">Belanja Rp260.000 lagi untuk naik ke Gold 🥇</span>
+                  <span id="cust-card-period-spend">Transaksi 90 Hari: Rp1.240.000</span>
+                </div>
+                <div class="member-progress-bar-bg">
+                  <div class="member-progress-bar-fill" id="cust-card-progress-bar" style="width: 82%;"></div>
+                </div>
+              </div>
+
+              <!-- Perks Quick List & Modal Trigger -->
+              <div class="member-card-perks-row">
+                <div class="member-perks-chips" id="cust-card-perks-preview">
+                  <span class="perk-chip">✓ Harga Khusus Member</span>
+                  <span class="perk-chip">✓ Info Promo Awal</span>
+                  <span class="perk-chip">✓ Kumpulkan Poin Belanja</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-emerald" onclick="CustomerApp.openMemberBenefitsModal()">
+                  Lihat Benefit & Aturan Level &rarr;
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- 4 Stat Metric Cards (Baris 4 Kartu) -->
@@ -509,22 +560,40 @@
         </section>
 
         <!-- ==========================================
-             6. PELACAKAN RESI
+             6. PELACAKAN RESI OTOMATIS
              ========================================== -->
         <section id="view-tracking" class="page-view">
           <div class="cust-card">
             <div class="cust-card-header">
-              <span class="cust-card-title">Lacak Pengiriman Kargo Pertanian</span>
+              <div>
+                <span class="cust-card-title">Pelacakan Pesanan & Kargo Pertanian</span>
+                <p style="font-size: 12px; color: var(--cust-text-muted); margin-top: 4px;">
+                  Sistem otomatis mendeteksi dan melacak paket sarana pertanian Anda langsung dari gudang tanpa perlu input manual.
+                </p>
+              </div>
             </div>
             <div class="cust-card-body">
-              <div class="form-group" style="max-width: 500px; margin-bottom: 20px;">
-                <label class="form-label">Masukkan Nomor Resi / No. Pesanan:</label>
-                <div style="display: flex; gap: 8px;">
-                  <input type="text" id="tracking-input" class="form-input" placeholder="Contoh: ORD-1001 atau JTC-ID-992019">
-                  <button class="btn btn-primary" onclick="CustomerApp.searchTracking()">Lacak</button>
-                </div>
+              <!-- Selector tabs for customer's own orders -->
+              <div id="customer-tracking-selector-wrap" style="margin-bottom: 20px;">
+                <label class="form-label" style="margin-bottom: 8px;">Pilih Barang / Pesanan yang Ingin Dilacak:</label>
+                <div id="customer-tracking-tabs" class="tracking-order-tabs"></div>
               </div>
+
+              <!-- Container for automatic tracking result -->
               <div id="tracking-result-container"></div>
+
+              <!-- Collapsible manual tracking -->
+              <div style="margin-top: 24px; border-top: 1px solid var(--cust-border-subtle); padding-top: 16px;">
+                <details style="font-size: 13px; color: var(--cust-text-muted);">
+                  <summary style="cursor: pointer; font-weight: 500; color: var(--cust-accent-mint);">
+                    Lacak nomor resi / pesanan lain secara manual &darr;
+                  </summary>
+                  <div style="margin-top: 12px; display: flex; gap: 8px; max-width: 480px;">
+                    <input type="text" id="tracking-input" class="form-input" placeholder="Masukkan Nomor Resi / ID Pesanan">
+                    <button class="btn btn-primary" onclick="CustomerApp.searchTrackingManual()">Lacak</button>
+                  </div>
+                </details>
+              </div>
             </div>
           </div>
         </section>
@@ -559,12 +628,12 @@
         </section>
 
         <!-- ==========================================
-             9. PENDIDIKAN (TIPS & PANDUAN AGRONOMI)
+             9. EDUKASI (TIPS & PANDUAN AGRONOMI)
              ========================================== -->
         <section id="view-tips" class="page-view">
           <div class="cust-card">
             <div class="cust-card-header">
-              <span class="cust-card-title">Pendidikan Agronomi & Panduan Musim Tanam</span>
+              <span class="cust-card-title">Edukasi Agronomi & Panduan Musim Tanam</span>
             </div>
             <div class="cust-card-body">
               <div id="tips-grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px;"></div>
@@ -573,14 +642,40 @@
         </section>
 
         <!-- ==========================================
-             10. PROFIL PETANI
+             10. PROFIL PETANI & KEANGGOTAAN
              ========================================== -->
         <section id="view-profile" class="page-view">
           <div class="cust-card">
             <div class="cust-card-header">
-              <span class="cust-card-title">Profil Petani & Data Lahan</span>
+              <span class="cust-card-title">Profil Petani & Keanggotaan Member</span>
             </div>
-            <div class="cust-card-body" style="max-width: 600px;">
+            <div class="cust-card-body" style="max-width: 680px;">
+              <!-- Member Status Card in Profile -->
+              <div class="profile-member-card" style="margin-bottom: 24px; padding: 18px; border-radius: 12px; background: linear-gradient(135deg, rgba(6, 30, 20, 0.95), rgba(4, 22, 14, 0.95)); border: 1px solid rgba(16, 185, 129, 0.3);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid rgba(16, 185, 129, 0.15); padding-bottom: 12px; margin-bottom: 14px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 28px;" id="profile-tier-icon">🥈</span>
+                    <div>
+                      <div style="font-size: 16px; font-weight: 800; color: #ECFDF5;" id="profile-tier-name">MEMBER SILVER</div>
+                      <div style="font-size: 11px; color: #8BA498;">Level Keanggotaan Berdasarkan Aktivitas Transaksi</div>
+                    </div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="font-size: 11px; color: #8BA498;">Poin Belanja Anda</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #34D399;" id="profile-points-display">124 Poin</div>
+                  </div>
+                </div>
+
+                <div id="profile-member-perks-summary" style="font-size: 12px; color: #D1FAE5; line-height: 1.6; margin-bottom: 14px;"></div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                  <span style="font-size: 11px; color: #5E7D6F;" id="profile-period-spend-info">Total Transaksi 90 Hari Terakhir: Rp1.240.000</span>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="CustomerApp.openMemberBenefitsModal()">
+                    Detail Benefit Semua Level &rarr;
+                  </button>
+                </div>
+              </div>
+
               <form id="form-customer-profile" onsubmit="CustomerApp.saveProfile(event)">
                 <div class="form-group">
                   <label class="form-label">Nama Lengkap Petani / Pembeli:</label>
@@ -714,6 +809,49 @@
       <div class="modal-body" id="modal-tip-body"></div>
       <div class="modal-footer">
         <button class="btn btn-secondary btn-modal-cancel">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Member Benefits & Tier Rules -->
+  <div id="modal-member-benefits" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 860px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+            <span>🌱</span> Sistem Keanggotaan Member Tani.SM
+          </h3>
+          <p style="font-size: 12px; color: var(--cust-text-muted); margin-top: 2px;">
+            Apresiasi nyata untuk petani mitra setia. Kumpulkan transaksi, naikkan level, dan nikmati keuntungan eksklusif.
+          </p>
+        </div>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body" id="modal-member-benefits-content">
+        <!-- Will be dynamically populated with current tier settings from store -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Cetak Resi & Surat Jalan Pelanggan -->
+  <div id="modal-customer-invoice" class="modal-overlay">
+    <div class="modal-box" style="max-width: 820px;">
+      <div class="modal-header no-print">
+        <h3 class="modal-title">Resi Pengiriman & Surat Jalan Pesanan</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body" id="modal-customer-invoice-content"></div>
+      <div class="modal-footer no-print" style="display: flex; justify-content: space-between; align-items: center;">
+        <button id="btn-invoice-track-direct" class="btn btn-primary" onclick="CustomerApp.trackOrderFromInvoice()">
+          🚚 Lacak Barang Pesanan Ini Langsung &rarr;
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary btn-modal-cancel">Tutup</button>
+          <button class="btn btn-outline-emerald" onclick="window.print()">Cetak Resi / Nota</button>
+        </div>
       </div>
     </div>
   </div>

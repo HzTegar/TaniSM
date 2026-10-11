@@ -208,11 +208,22 @@ const CustomerApp = {
     const userDisplay = document.getElementById('header-user-display');
     const roleTagDisplay = document.getElementById('role-tag-display');
     const actionLinks = document.getElementById('role-action-links');
+    const tierBadge = document.getElementById('customer-tier-badge');
+    const pointsBadge = document.getElementById('customer-points-badge');
 
     if (nameEl) nameEl.textContent = auth ? auth.name || 'customer' : 'customer';
     if (roleEl) roleEl.textContent = auth && auth.role === 'admin' ? 'Admin Gudang' : (auth && auth.kelompokTani ? `Petani (${auth.kelompokTani})` : 'Customer');
 
     if (auth) {
+      const tierInfo = window.taniStore.getTierInfo(auth.tier || 'silver');
+      if (tierBadge) {
+        tierBadge.textContent = `${tierInfo.badge} ${tierInfo.name}`;
+        tierBadge.className = `member-tier-pill tier-${tierInfo.key}`;
+      }
+      if (pointsBadge) {
+        pointsBadge.textContent = `• ${(auth.points || 0).toLocaleString('id-ID')} Poin`;
+      }
+
       if (auth.role === 'admin') {
         // Admin viewing customer portal (Allowed!)
         if (roleTagDisplay) {
@@ -233,15 +244,16 @@ const CustomerApp = {
       } else {
         // Customer viewing customer portal (Allowed!)
         if (roleTagDisplay) {
-          roleTagDisplay.textContent = 'Customer / Petani';
-          roleTagDisplay.style.backgroundColor = '#374151';
-          roleTagDisplay.style.color = '#F3F4F6';
+          roleTagDisplay.textContent = `Member ${tierInfo.name} ${tierInfo.badge}`;
+          roleTagDisplay.style.backgroundColor = '#062817';
+          roleTagDisplay.style.color = tierInfo.color || '#34D399';
         }
         if (userDisplay) {
-          userDisplay.textContent = auth.name + (auth.kelompokTani ? ` (${auth.kelompokTani})` : '');
+          userDisplay.innerHTML = `${auth.name} ${auth.kelompokTani ? `(${auth.kelompokTani})` : ''} • <strong style="color:#34D399;">${(auth.points || 0).toLocaleString('id-ID')} Poin</strong>`;
         }
         if (actionLinks) {
           actionLinks.innerHTML = `
+            <a href="javascript:void(0)" onclick="CustomerApp.openMemberBenefitsModal()" style="color: #34D399; margin-right: 12px; font-weight: 600;">💎 Benefit Member</a>
             <a href="javascript:void(0)" onclick="CustomerApp.switchView('logout')" style="color: #F87171;">Keluar / Ganti Akun</a>
           `;
         }
@@ -280,6 +292,58 @@ const CustomerApp = {
     if (elStock) elStock.textContent = totalStock;
     if (elOrders) elOrders.textContent = totalOrders;
     if (elSales) elSales.textContent = window.taniStore.formatRupiah(totalSales);
+
+    // Render Member Card in Dasbor
+    const auth = window.taniStore.getAuth();
+    if (auth && auth.role === 'customer') {
+      const tierInfo = window.taniStore.getTierInfo(auth.tier || 'silver');
+      const settings = window.taniStore.getMemberSettings();
+      const periodSpend = window.taniStore.calculateCustomerPeriodSpend(auth.id, settings.evaluationPeriodDays);
+
+      const tierBadgeEl = document.getElementById('cust-card-tier-badge');
+      const tierNameEl = document.getElementById('cust-card-tier-name');
+      const pointsEl = document.getElementById('cust-card-points');
+      const progressTextEl = document.getElementById('cust-card-progress-text');
+      const periodSpendEl = document.getElementById('cust-card-period-spend');
+      const progressBarEl = document.getElementById('cust-card-progress-bar');
+      const perksPreviewEl = document.getElementById('cust-card-perks-preview');
+
+      if (tierBadgeEl) tierBadgeEl.textContent = tierInfo.badge;
+      if (tierNameEl) tierNameEl.textContent = `MEMBER ${tierInfo.name}`;
+      if (pointsEl) pointsEl.textContent = `${(auth.points || 0).toLocaleString('id-ID')} Poin`;
+      if (periodSpendEl) periodSpendEl.textContent = `Aktivitas ${settings.evaluationPeriodDays || 90} Hari: ${window.taniStore.formatRupiah(periodSpend)}`;
+
+      let progressPct = 100;
+      if (tierInfo.key === 'silver') {
+        const needed = Math.max(0, Number(settings.goldMinSpend) - periodSpend);
+        if (needed > 0) {
+          if (progressTextEl) progressTextEl.textContent = `Belanja ${window.taniStore.formatRupiah(needed)} lagi untuk naik ke Gold 🥇`;
+          progressPct = Math.min(100, Math.round((periodSpend / Number(settings.goldMinSpend)) * 100));
+        } else {
+          if (progressTextEl) progressTextEl.textContent = `Target Gold terpenuhi! Level akan naik saat evaluasi berkala 🥇`;
+          progressPct = 100;
+        }
+      } else if (tierInfo.key === 'gold') {
+        const needed = Math.max(0, Number(settings.platinumMinSpend) - periodSpend);
+        if (needed > 0) {
+          if (progressTextEl) progressTextEl.textContent = `Belanja ${window.taniStore.formatRupiah(needed)} lagi untuk naik ke Platinum 💎`;
+          progressPct = Math.min(100, Math.round((periodSpend / Number(settings.platinumMinSpend)) * 100));
+        } else {
+          if (progressTextEl) progressTextEl.textContent = `Target Platinum terpenuhi! Level akan naik saat evaluasi berkala 💎`;
+          progressPct = 100;
+        }
+      } else if (tierInfo.key === 'platinum') {
+        if (progressTextEl) progressTextEl.textContent = `💎 Level Tertinggi Tercapai! Nikmati semua benefit prioritas & bonus produk.`;
+        progressPct = 100;
+      }
+
+      if (progressBarEl) progressBarEl.style.width = `${progressPct}%`;
+      if (perksPreviewEl) {
+        perksPreviewEl.innerHTML = tierInfo.perks.slice(0, 3).map(p => `
+          <span class="perk-chip">✓ ${p}</span>
+        `).join('');
+      }
+    }
 
     // Kolom 1: Produk Terbaru
     const recentProductsEl = document.getElementById('cust-recent-products-list');
@@ -465,12 +529,21 @@ const CustomerApp = {
     if (product.badge === 'Organik') badgeClass = 'badge-green';
     if (product.badge === 'Official') badgeClass = 'badge-blue';
 
+    const auth = window.taniStore.getAuth();
+    const tierInfo = window.taniStore.getTierInfo(auth ? auth.tier : 'silver');
+    const settings = window.taniStore.getMemberSettings();
+    const isBonusProduct = (settings.freeProductId === product.id);
+
+    // Hitung poin yang diperoleh dari produk ini
+    const estPoints = Math.floor((product.price / (Number(settings.pointsPerRupiah) || 10000)) * (tierInfo.pointsMultiplier || 1.0));
+
     const fallbackImg = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><rect width='300' height='300' fill='%232E7D32'/><text x='50%' y='46%' dominant-baseline='middle' text-anchor='middle' fill='%23FFFFFF' font-family='sans-serif' font-size='22' font-weight='bold'>Tani.SM</text><text x='50%' y='60%' dominant-baseline='middle' text-anchor='middle' fill='%23A7F3D0' font-family='sans-serif' font-size='14'>Sarana Pertanian</text></svg>";
     return `
       <div class="product-card" onclick="CustomerApp.openProductDetail('${product.id}')">
         <div class="product-card-image-wrap">
           <img src="${product.image}" alt="${product.name}" class="product-card-image" loading="lazy" onerror="this.src='${fallbackImg}'">
           ${product.badge ? `<span class="badge ${badgeClass} product-card-badge">${product.badge}</span>` : ''}
+          ${isBonusProduct ? `<span class="badge" style="position:absolute; top:8px; left:8px; background:#0284C7; color:#FFF; font-size:10px;">🎁 Bonus Platinum</span>` : ''}
           ${discPercent > 0 ? `<span class="badge badge-orange" style="position:absolute; top:8px; right:8px;">-${discPercent}%</span>` : ''}
         </div>
         <div class="product-card-body">
@@ -480,9 +553,14 @@ const CustomerApp = {
             <span class="product-card-price">${window.taniStore.formatRupiah(product.price)}</span>
             ${product.originalPrice && product.originalPrice > product.price ? `<span class="product-card-strike">${window.taniStore.formatRupiah(product.originalPrice)}</span>` : ''}
           </div>
+          ${product.memberPrice ? `
+            <div style="font-size: 11px; color: #10B981; font-weight: 700; margin-top: 2px;">
+              🏷️ Member: ${window.taniStore.formatRupiah(product.memberPrice)}
+            </div>
+          ` : ''}
           <div class="product-card-meta">
-            <span>Rating: ${product.rating} ★ (${product.soldCount} terjual)</span>
-            <span class="product-card-location">${product.location.split(',')[0]}</span>
+            <span style="color:#D97706; font-weight:600;">★ ${product.rating} (${product.soldCount} terjual)</span>
+            <span style="color:#10B981; font-size:11px; font-weight:600;">+${estPoints} Poin</span>
           </div>
         </div>
       </div>
@@ -505,6 +583,12 @@ const CustomerApp = {
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : 0;
 
+    const auth = window.taniStore.getAuth();
+    const tierInfo = window.taniStore.getTierInfo(auth ? auth.tier : 'silver');
+    const settings = window.taniStore.getMemberSettings();
+    const estPoints = Math.floor((product.price / (Number(settings.pointsPerRupiah) || 10000)) * (tierInfo.pointsMultiplier || 1.0));
+    const isBonusProduct = (settings.freeProductId === product.id);
+
     const reviews = window.taniStore.getReviews().filter(r => r.productId === product.id);
 
     modalContent.innerHTML = `
@@ -524,6 +608,7 @@ const CustomerApp = {
         <div>
           <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
             ${product.badge ? `<span class="badge badge-green">${product.badge}</span>` : ''}
+            ${isBonusProduct ? `<span class="badge badge-blue">🎁 Bonus Gratis Platinum (Min. Rp500rb)</span>` : ''}
             <span style="font-size:12px; color:#4B5563;">Gudang: <strong>${product.location}</strong></span>
           </div>
 
@@ -535,12 +620,30 @@ const CustomerApp = {
             <span><strong>${product.reviewCount}</strong> Ulasan Petani</span>
             <span style="color:#6B7280;">|</span>
             <span><strong>${product.soldCount}</strong> Terjual</span>
+            <span style="color:#6B7280;">|</span>
+            <span style="color:#10B981; font-weight:700;">+${estPoints} Poin Member</span>
           </div>
 
           <div class="detail-price-box">
             <span class="detail-price">${window.taniStore.formatRupiah(product.price)}</span>
             ${product.originalPrice ? `<span class="detail-strike">${window.taniStore.formatRupiah(product.originalPrice)}</span>` : ''}
             ${discPercent > 0 ? `<span class="badge badge-orange">Diskon ${discPercent}%</span>` : ''}
+          </div>
+
+          <!-- Member Special Price / Tier Discount Notice -->
+          <div style="margin-bottom: 14px; padding: 10px 12px; border-radius: 6px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); font-size: 12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color: #047857; font-weight:700;">Benefit Keanggotaan Member:</span>
+              <span class="badge-tier-pill">${tierInfo.badge} ${tierInfo.name}</span>
+            </div>
+            ${product.memberPrice ? `
+              <div style="margin-top: 4px; color: #065F46;">
+                🏷️ Harga Khusus Member: <strong>${window.taniStore.formatRupiah(product.memberPrice)}</strong>
+              </div>
+            ` : ''}
+            <div style="margin-top: 4px; color: #065F46;">
+              ✨ Tier ${tierInfo.name}: ${tierInfo.discountPercent > 0 ? `Diskon tambahan ${tierInfo.discountPercent}% saat checkout` : 'Kumpulkan poin belanja'} • Multiplier poin ${tierInfo.pointsMultiplier}x.
+            </div>
           </div>
 
           <table class="detail-specs-table">
@@ -645,11 +748,13 @@ const CustomerApp = {
   // 3. KERANJANG BELANJA (CART)
   // ==========================================
   renderCart() {
+    const auth = window.taniStore.getAuth();
     const cart = window.taniStore.getCart();
     const container = document.getElementById('cart-items-container');
     const subtotalEl = document.getElementById('cart-subtotal-val');
     const totalEl = document.getElementById('cart-total-val');
     const discountEl = document.getElementById('cart-discount-val');
+    const weightEl = document.getElementById('cart-weight-val');
 
     if (!container) return;
 
@@ -664,11 +769,13 @@ const CustomerApp = {
       if (subtotalEl) subtotalEl.textContent = 'Rp 0';
       if (discountEl) discountEl.textContent = 'Rp 0';
       if (totalEl) totalEl.textContent = 'Rp 0';
+      if (weightEl) weightEl.textContent = '0 Kg';
       return;
     }
 
     let subtotal = 0;
     let totalWeight = 0;
+    const selectedCart = cart.filter(item => item.selected !== false);
 
     const rowsHtml = cart.map(item => {
       const lineTotal = item.price * item.qty;
@@ -707,7 +814,55 @@ const CustomerApp = {
       `;
     }).join('');
 
+    // Member Benefits calculation
+    const memberBenefits = auth ? window.taniStore.calculateOrderMemberBenefits(auth.id, selectedCart, subtotal) : null;
+    const settings = window.taniStore.getMemberSettings();
+
+    // Member Alert Banner
+    let memberBannerHtml = '';
+    if (memberBenefits) {
+      const tInfo = memberBenefits.tierInfo;
+      if (tInfo.key === 'platinum') {
+        if (memberBenefits.isFreeBonusEligible && memberBenefits.freeBonusProduct) {
+          memberBannerHtml = `
+            <div style="background: rgba(2, 132, 199, 0.12); border: 1px solid #0284C7; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <strong style="color: #0284C7;">💎 Benefit Eksklusif Platinum Aktif!</strong>
+                <div style="font-size: 12px; color: #38BDF8; margin-top: 2px;">
+                  Selamat! Anda berhak mendapatkan <strong>1x Bonus Free Product: ${memberBenefits.freeBonusProduct.name}</strong> (Gratis Rp0) karena belanja &ge; ${window.taniStore.formatRupiah(settings.freeProductMinSpend)}.
+                </div>
+              </div>
+              <span class="badge" style="background:#0284C7; color:#FFF; font-size:11px;">1 Unit Gratis Terklaim</span>
+            </div>
+          `;
+        } else {
+          const needed = Math.max(0, Number(settings.freeProductMinSpend) - subtotal);
+          memberBannerHtml = `
+            <div style="background: rgba(2, 132, 199, 0.08); border: 1px dashed rgba(2, 132, 199, 0.4); border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: #0284C7; display: flex; justify-content: space-between; align-items: center;">
+              <span>💎 <strong>Member Platinum:</strong> Tambah belanja <strong>${window.taniStore.formatRupiah(needed)}</strong> lagi untuk klaim bonus free product (${memberBenefits.tierInfo.bonusProduct.name}).</span>
+              <a href="javascript:void(0)" onclick="CustomerApp.openMemberBenefitsModal()" style="color:#38BDF8; font-weight:600;">Lihat Detail &rarr;</a>
+            </div>
+          `;
+        }
+      } else if (tInfo.key === 'gold') {
+        memberBannerHtml = `
+          <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: #D97706; display: flex; justify-content: space-between; align-items: center;">
+            <span>🥇 <strong>Member Gold:</strong> Diskon khusus ${tInfo.discountPercent}% otomatis aktif untuk produk yang memenuhi syarat (Maks cap ${window.taniStore.formatRupiah(settings.maxDiscountCap)}). Multiplier Poin ${tInfo.pointsMultiplier}x.</span>
+            <span style="font-weight: 700;">Hemat ${window.taniStore.formatRupiah(memberBenefits.tierDiscount)}</span>
+          </div>
+        `;
+      } else {
+        memberBannerHtml = `
+          <div style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: #94A3B8; display: flex; justify-content: space-between; align-items: center;">
+            <span>🥈 <strong>Member Silver:</strong> Kumpulkan transaksi untuk naik ke level Gold 🥇 (Diskon 5% + Poin 1.5x).</span>
+            <a href="javascript:void(0)" onclick="CustomerApp.openMemberBenefitsModal()" style="color:#34D399; text-decoration:underline;">Lihat Benefit Semua Level &rarr;</a>
+          </div>
+        `;
+      }
+    }
+
     container.innerHTML = `
+      ${memberBannerHtml}
       <table class="cart-table">
         <thead>
           <tr>
@@ -728,25 +883,31 @@ const CustomerApp = {
     `;
 
     // Apply Voucher Calculation
-    let discount = 0;
+    let voucherDiscount = 0;
     if (this.appliedVoucher) {
       if (this.appliedVoucher.discountFlat) {
-        discount = this.appliedVoucher.discountFlat;
+        voucherDiscount = this.appliedVoucher.discountFlat;
       } else if (this.appliedVoucher.discountPercent) {
-        discount = (subtotal * this.appliedVoucher.discountPercent) / 100;
-        if (this.appliedVoucher.maxDiscount && discount > this.appliedVoucher.maxDiscount) {
-          discount = this.appliedVoucher.maxDiscount;
+        voucherDiscount = (subtotal * this.appliedVoucher.discountPercent) / 100;
+        if (this.appliedVoucher.maxDiscount && voucherDiscount > this.appliedVoucher.maxDiscount) {
+          voucherDiscount = this.appliedVoucher.maxDiscount;
         }
       }
     }
 
-    const finalTotal = Math.max(0, subtotal - discount);
+    const tierDiscount = memberBenefits ? memberBenefits.tierDiscount : 0;
+    const finalTotal = Math.max(0, subtotal - voucherDiscount - tierDiscount);
 
     if (subtotalEl) subtotalEl.textContent = window.taniStore.formatRupiah(subtotal);
-    if (discountEl) discountEl.textContent = '- ' + window.taniStore.formatRupiah(discount);
+    if (discountEl) {
+      let discText = '- ' + window.taniStore.formatRupiah(voucherDiscount);
+      if (tierDiscount > 0) {
+        discText += ` (Kupon) + - ${window.taniStore.formatRupiah(tierDiscount)} (${memberBenefits.tierInfo.badge} Diskon Member)`;
+      }
+      discountEl.textContent = discText;
+    }
     if (totalEl) totalEl.textContent = window.taniStore.formatRupiah(finalTotal);
 
-    const weightEl = document.getElementById('cart-weight-val');
     if (weightEl) {
       weightEl.textContent = `${(totalWeight / 1000).toFixed(2)} Kg`;
     }
@@ -826,17 +987,20 @@ const CustomerApp = {
     if (nameField && auth) nameField.value = auth.name || 'Budi Santoso';
     if (phoneField && auth) phoneField.value = auth.phone || '0812-3456-7890';
 
-    // Populate Item Summary
-    const itemsContainer = document.getElementById('checkout-items-list');
     let subtotal = 0;
     let totalWeight = 0;
+    cart.forEach(item => {
+      subtotal += item.price * item.qty;
+      totalWeight += (item.weightGram || 1000) * item.qty;
+    });
 
+    const memberBenefits = auth ? window.taniStore.calculateOrderMemberBenefits(auth.id, cart, subtotal) : null;
+
+    // Populate Item Summary
+    const itemsContainer = document.getElementById('checkout-items-list');
     if (itemsContainer) {
-      itemsContainer.innerHTML = cart.map(item => {
+      let itemsListHtml = cart.map(item => {
         const itemTotal = item.price * item.qty;
-        subtotal += itemTotal;
-        totalWeight += (item.weightGram || 1000) * item.qty;
-
         return `
           <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #E5E7EB; font-size:13px;">
             <div style="display:flex; gap:10px; align-items:center;">
@@ -850,33 +1014,64 @@ const CustomerApp = {
           </div>
         `;
       }).join('');
+
+      // If Platinum bonus product eligible, display it in the list!
+      if (memberBenefits && memberBenefits.isFreeBonusEligible && memberBenefits.freeBonusProduct) {
+        itemsListHtml += `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #E5E7EB; font-size:13px; background: rgba(2, 132, 199, 0.08); padding-left: 8px; padding-right: 8px; border-radius: 4px; margin-top: 4px;">
+            <div style="display:flex; gap:10px; align-items:center;">
+              <span style="font-size: 20px;">🎁</span>
+              <div>
+                <div style="font-weight:700; color: #0284C7;">[BONUS PLATINUM] ${memberBenefits.freeBonusProduct.name}</div>
+                <div style="font-size:11px; color:#38BDF8;">1 x ${memberBenefits.freeBonusProduct.unit} (Syarat min. transaksi terpenuhi)</div>
+              </div>
+            </div>
+            <div style="font-weight:800; color:#10B981;">GRATIS (Rp 0)</div>
+          </div>
+        `;
+      }
+
+      itemsContainer.innerHTML = itemsListHtml;
     }
 
-    // Calculate shipping based on weight & selected courier
+    // Shipping calculation
     const courierSelect = document.querySelector('input[name="checkout-courier"]:checked');
     const courierRate = courierSelect ? Number(courierSelect.getAttribute('data-rate') || 25000) : 25000;
     const kg = Math.ceil(totalWeight / 1000);
     const shippingCost = Math.max(courierRate, courierRate + (kg - 1) * 3000);
 
     // Voucher
-    let discount = 0;
+    let voucherDiscount = 0;
     if (this.appliedVoucher) {
       if (this.appliedVoucher.discountFlat) {
-        discount = this.appliedVoucher.discountFlat;
+        voucherDiscount = this.appliedVoucher.discountFlat;
       } else if (this.appliedVoucher.discountPercent) {
-        discount = (subtotal * this.appliedVoucher.discountPercent) / 100;
-        if (this.appliedVoucher.maxDiscount && discount > this.appliedVoucher.maxDiscount) {
-          discount = this.appliedVoucher.maxDiscount;
+        voucherDiscount = (subtotal * this.appliedVoucher.discountPercent) / 100;
+        if (this.appliedVoucher.maxDiscount && voucherDiscount > this.appliedVoucher.maxDiscount) {
+          voucherDiscount = this.appliedVoucher.maxDiscount;
         }
       }
     }
 
-    const grandTotal = Math.max(0, subtotal + shippingCost - discount);
+    const tierDiscount = memberBenefits ? memberBenefits.tierDiscount : 0;
+    const totalDiscount = voucherDiscount + tierDiscount;
+    const grandTotal = Math.max(0, subtotal + shippingCost - totalDiscount);
 
-    document.getElementById('checkout-subtotal-val').textContent = window.taniStore.formatRupiah(subtotal);
-    document.getElementById('checkout-shipping-val').textContent = window.taniStore.formatRupiah(shippingCost);
-    document.getElementById('checkout-discount-val').textContent = '- ' + window.taniStore.formatRupiah(discount);
-    document.getElementById('checkout-grand-total-val').textContent = window.taniStore.formatRupiah(grandTotal);
+    const subtotalEl = document.getElementById('checkout-subtotal-val');
+    const shippingEl = document.getElementById('checkout-shipping-val');
+    const discountEl = document.getElementById('checkout-discount-val');
+    const totalEl = document.getElementById('checkout-total-val') || document.getElementById('checkout-grand-total-val');
+
+    if (subtotalEl) subtotalEl.textContent = window.taniStore.formatRupiah(subtotal);
+    if (shippingEl) shippingEl.textContent = window.taniStore.formatRupiah(shippingCost);
+    if (discountEl) {
+      let discLabel = '- ' + window.taniStore.formatRupiah(voucherDiscount);
+      if (tierDiscount > 0) {
+        discLabel += ` (Kupon) + - ${window.taniStore.formatRupiah(tierDiscount)} (${memberBenefits.tierInfo.badge} Diskon ${memberBenefits.tierInfo.name})`;
+      }
+      discountEl.textContent = discLabel;
+    }
+    if (totalEl) totalEl.textContent = window.taniStore.formatRupiah(grandTotal);
   },
 
   updateCheckoutCalculations() {
@@ -910,24 +1105,49 @@ const CustomerApp = {
       totalWeight += (i.weightGram || 1000) * i.qty;
     });
 
+    const memberBenefits = auth ? window.taniStore.calculateOrderMemberBenefits(auth.id, cart, subtotal) : null;
+
     const courierRate = courierRadio ? Number(courierRadio.getAttribute('data-rate') || 25000) : 25000;
     const kg = Math.ceil(totalWeight / 1000);
     const shippingCost = Math.max(courierRate, courierRate + (kg - 1) * 3000);
 
-    let discount = 0;
+    let voucherDiscount = 0;
     if (this.appliedVoucher) {
       if (this.appliedVoucher.discountFlat) {
-        discount = this.appliedVoucher.discountFlat;
+        voucherDiscount = this.appliedVoucher.discountFlat;
       } else if (this.appliedVoucher.discountPercent) {
-        discount = (subtotal * this.appliedVoucher.discountPercent) / 100;
-        if (this.appliedVoucher.maxDiscount && discount > this.appliedVoucher.maxDiscount) {
-          discount = this.appliedVoucher.maxDiscount;
+        voucherDiscount = (subtotal * this.appliedVoucher.discountPercent) / 100;
+        if (this.appliedVoucher.maxDiscount && voucherDiscount > this.appliedVoucher.maxDiscount) {
+          voucherDiscount = this.appliedVoucher.maxDiscount;
         }
       }
     }
 
-    const grandTotal = Math.max(0, subtotal + shippingCost - discount);
+    const tierDiscount = memberBenefits ? memberBenefits.tierDiscount : 0;
+    const grandTotal = Math.max(0, subtotal + shippingCost - voucherDiscount - tierDiscount);
     const orderId = 'ORD-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.floor(100 + Math.random() * 900);
+    const trackingNo = 'TANI-' + Math.floor(10000000 + Math.random() * 90000000);
+
+    // Build order items
+    const orderItems = cart.map(c => ({
+      productId: c.productId,
+      name: c.name,
+      price: c.price,
+      qty: c.qty,
+      unit: c.unit
+    }));
+
+    // Attach Platinum bonus gift if eligible
+    if (memberBenefits && memberBenefits.isFreeBonusEligible && memberBenefits.freeBonusProduct) {
+      orderItems.push({
+        productId: memberBenefits.freeBonusProduct.productId,
+        name: `[BONUS PLATINUM] ${memberBenefits.freeBonusProduct.name}`,
+        price: 0,
+        qty: 1,
+        unit: memberBenefits.freeBonusProduct.unit,
+        isFreeGift: true
+      });
+    }
 
     // Create Order Record
     const newOrder = {
@@ -941,21 +1161,21 @@ const CustomerApp = {
       paymentMethod: paymentMethod,
       paymentStatus: paymentMethod.includes('COD') ? 'Bayar di Tempat (COD)' : 'Menunggu Verifikasi',
       courier: courierName,
-      trackingNo: 'TANI-' + Math.floor(10000000 + Math.random() * 90000000),
+      trackingNo: trackingNo,
       subtotal: subtotal,
       shippingCost: shippingCost,
-      discount: discount,
+      discount: voucherDiscount,
+      tierDiscount: tierDiscount,
+      memberTier: memberBenefits ? memberBenefits.tierKey : 'silver',
+      pointsEarned: memberBenefits ? memberBenefits.pointsEarned : 0,
       total: grandTotal,
-      items: cart.map(c => ({
-        productId: c.productId,
-        name: c.name,
-        price: c.price,
-        qty: c.qty,
-        unit: c.unit
-      })),
-      warehouseNotes: 'Pesanan baru dari web Tani.SM. Siapkan packing aman tahan guncangan.',
+      items: orderItems,
+      warehouseNotes: memberBenefits && memberBenefits.tierInfo && memberBenefits.tierInfo.priorityService
+        ? '⚡ PRIORITAS PLATINUM: Kemas cepat & utamakan pengiriman kebun mitra VIP.'
+        : 'Pesanan baru dari web Tani.SM. Siapkan packing aman tahan guncangan.',
       trackingHistory: [
-        { time: window.taniStore.getCurrentDateTime(), text: `Pesanan dibuat via web Tani.SM dengan metode ${paymentMethod}.` }
+        { time: window.taniStore.getCurrentDateTime(), text: `Pesanan dibuat via web Tani.SM dengan metode ${paymentMethod}.` },
+        { time: window.taniStore.getCurrentDateTime(), text: `Nomor resi ${trackingNo} terdaftar pada sistem logistik ${courierName}.` }
       ]
     };
 
@@ -967,24 +1187,43 @@ const CustomerApp = {
       window.taniStore.updateProductStock(item.productId, -item.qty, 'Keluar', `Alokasi pesanan ${orderId}`);
     });
 
+    // Add customer points & evaluate tier promotion
+    if (auth && auth.id) {
+      const earnedPts = memberBenefits ? memberBenefits.pointsEarned : 0;
+      window.taniStore.addCustomerPoints(auth.id, earnedPts);
+      const evalResult = window.taniStore.evaluateCustomerTier(auth.id);
+      if (evalResult && evalResult.isUpgraded) {
+        setTimeout(() => {
+          TaniAuth.showToast(`🎉 Luar Biasa! Level Anda telah naik menjadi Member ${evalResult.newTier.toUpperCase()}!`, 'success');
+        }, 1200);
+      }
+    }
+
     // Clear cart & voucher
     window.taniStore.clearCart();
     this.appliedVoucher = null;
     this.updateCartBadge();
+    this.renderHeaderUserInfo();
 
     TaniAuth.showToast(`Pesanan ${orderId} berhasil dibuat! Segera diproses oleh Admin Gudang.`, 'success');
-    this.switchView('orders');
+    this.openTrackingForOrder(orderId);
   },
 
   // ==========================================
   // 5. PESANAN SAYA
   // ==========================================
   renderOrders(statusFilter = 'all') {
-    const orders = window.taniStore.getOrders();
+    const auth = window.taniStore.getAuth();
+    const allOrders = window.taniStore.getOrders();
     const container = document.getElementById('orders-list-container');
     if (!container) return;
 
-    // Filter by status tab
+    // Filter to current customer's orders if logged in as customer
+    let orders = (auth && auth.role === 'customer')
+      ? allOrders.filter(o => o.customerId === auth.id || o.customerName === auth.name)
+      : allOrders;
+
+    // Filter by status tab if applicable
     let filtered = orders;
     if (statusFilter !== 'all') {
       filtered = orders.filter(o => {
@@ -999,7 +1238,8 @@ const CustomerApp = {
     if (filtered.length === 0) {
       container.innerHTML = `
         <div style="background:#FFF; padding:40px; text-align:center; border:1px solid #E5E7EB; border-radius:4px;">
-          <p style="font-weight:600; color:#4B5563;">Tidak ada pesanan di kategori status ini.</p>
+          <p style="font-weight:600; color:#4B5563;">Tidak ada riwayat pesanan.</p>
+          <button class="btn btn-primary" style="margin-top:12px;" onclick="CustomerApp.switchView('catalog')">Mulai Belanja Sarana Tani</button>
         </div>
       `;
       return;
@@ -1010,12 +1250,19 @@ const CustomerApp = {
       if (order.status === 'Selesai') statusBadge = 'badge-green';
       if (order.status === 'Dikirim') statusBadge = 'badge-blue';
 
+      const tierBadgeHtml = order.memberTier ? `
+        <span class="member-tier-pill tier-${order.memberTier}" style="font-size:10px; padding:2px 8px;">
+          ${order.memberTier.toUpperCase()}
+        </span>
+      ` : '';
+
       return `
         <div class="order-card">
           <div class="order-card-header">
-            <div>
+            <div style="display:flex; align-items:center; gap:8px;">
               <strong>No. Pesanan: ${order.id}</strong>
-              <span style="color:#6B7280; margin-left:8px; font-size:12px;">(${order.date})</span>
+              ${tierBadgeHtml}
+              <span style="color:#6B7280; font-size:12px;">(${order.date})</span>
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="badge ${statusBadge}">${order.status}</span>
@@ -1024,28 +1271,31 @@ const CustomerApp = {
           </div>
 
           <div style="margin-bottom:14px;">
-            ${order.items.map(item => `
-              <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0;">
+            ${(order.items || []).map(item => `
+              <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px dashed #F1F5F9;">
                 <div>
                   <strong>${item.name}</strong>
-                  <span style="color:#6B7280;"> x ${item.qty} (${item.unit})</span>
+                  ${item.isFreeGift ? '<span class="badge" style="background:#0284C7; color:#FFF; font-size:10px; margin-left:6px;">Bonus Free</span>' : ''}
+                  <span style="color:#6B7280;"> x ${item.qty} (${item.unit || 'unit'})</span>
                 </div>
-                <div>${window.taniStore.formatRupiah(item.price * item.qty)}</div>
+                <div>${item.price > 0 ? window.taniStore.formatRupiah(item.price * item.qty) : '<span style="color:#10B981; font-weight:700;">Gratis</span>'}</div>
               </div>
             `).join('')}
           </div>
 
-          <div style="display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid #E5E7EB;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid #E5E7EB; flex-wrap:wrap; gap:12px;">
             <div>
-              <span style="font-size:12px; color:#6B7280;">Metode Bayar: <strong>${order.paymentMethod}</strong> (${order.paymentStatus})</span>
-              <div style="font-size:12px; color:#1F2937; margin-top:2px;">Resi Kargo: <strong>${order.trackingNo}</strong></div>
+              <div style="font-size:12px; color:#6B7280;">Metode Bayar: <strong>${order.paymentMethod}</strong> (${order.paymentStatus})</div>
+              <div style="font-size:12px; color:#1F2937; margin-top:2px;">Resi Kargo: <strong style="color:#059669;">${order.trackingNo}</strong></div>
+              ${order.pointsEarned ? `<div style="font-size:11px; color:#10B981; font-weight:600; margin-top:2px;">+${order.pointsEarned} Poin Didapat</div>` : ''}
             </div>
             <div style="text-align:right;">
-              <span style="font-size:12px; color:#6B7280;">Total Belanja: </span>
+              <span style="font-size:12px; color:#6B7280;">Total Tagihan: </span>
               <span class="font-price" style="font-size:18px;">${window.taniStore.formatRupiah(order.total)}</span>
-              <div style="margin-top:8px; display:flex; gap:8px; justify-content:flex-end;">
-                <button class="btn btn-secondary btn-sm" onclick="CustomerApp.openTrackingForOrder('${order.id}')">Lacak Resi</button>
-                <button class="btn btn-outline-orange btn-sm" onclick="CustomerApp.openReviewModal('${order.items[0].productId}', '${order.items[0].name}')">Beri Ulasan</button>
+              <div style="margin-top:8px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+                <button class="btn btn-secondary btn-sm" onclick="CustomerApp.openCustomerInvoice('${order.id}')">📄 Cetak Resi & Nota</button>
+                <button class="btn btn-primary btn-sm" onclick="CustomerApp.openTrackingForOrder('${order.id}')">🚚 Lacak Barang Pesanan</button>
+                ${order.items && order.items[0] && !order.items[0].isFreeGift ? `<button class="btn btn-outline-orange btn-sm" onclick="CustomerApp.openReviewModal('${order.items[0].productId}', '${order.items[0].name}')">Beri Ulasan</button>` : ''}
               </div>
             </div>
           </div>
@@ -1061,90 +1311,453 @@ const CustomerApp = {
   },
 
   // ==========================================
-  // 6. PELACAKAN RESI
+  // 6. PELACAKAN RESI OTOMATIS
   // ==========================================
   renderTracking(targetOrder = null) {
-    const orders = window.taniStore.getOrders();
-    const selector = document.getElementById('tracking-order-select');
+    const auth = window.taniStore.getAuth();
+    const allOrders = window.taniStore.getOrders();
+    const userOrders = (auth && auth.role === 'customer')
+      ? allOrders.filter(o => o.customerId === auth.id || o.customerName === auth.name)
+      : allOrders;
 
-    if (selector && orders.length > 0) {
-      selector.innerHTML = orders.map(o => `
-        <option value="${o.id}" ${targetOrder && targetOrder.id === o.id ? 'selected' : ''}>
-          ${o.id} - ${o.items[0] ? o.items[0].name.substring(0, 30) : 'Pesanan'} (${o.status})
-        </option>
-      `).join('');
+    const tabsContainer = document.getElementById('customer-tracking-tabs');
+    const resultContainer = document.getElementById('tracking-result-container');
+    const wrapSelector = document.getElementById('customer-tracking-selector-wrap');
+
+    if (!resultContainer) return;
+
+    if (userOrders.length === 0) {
+      if (wrapSelector) wrapSelector.style.display = 'none';
+      resultContainer.innerHTML = `
+        <div style="background: #04160E; border: 1px solid var(--cust-border-subtle); border-radius: 8px; padding: 48px; text-align: center;">
+          <div style="font-size: 36px; margin-bottom: 12px;">🚚</div>
+          <h3 style="color: #ECFDF5; font-size: 16px; font-weight: 700; margin-bottom: 8px;">Belum Ada Pesanan yang Dilacak</h3>
+          <p style="color: #8BA498; font-size: 13px; max-width: 440px; margin: 0 auto 16px auto;">
+            Anda belum memiliki pesanan aktif. Setelah memesan benih, pupuk, atau sarana tani, sistem akan otomatis melacak barang pesanan Anda di sini tanpa perlu input manual.
+          </p>
+          <button class="btn btn-primary" onclick="CustomerApp.switchView('catalog')">Mulai Belanja Sarana Tani</button>
+        </div>
+      `;
+      return;
     }
 
-    const orderToTrack = targetOrder || (orders.length > 0 ? orders[0] : null);
-    this.displayTrackingDetails(orderToTrack);
-  },
+    if (wrapSelector) wrapSelector.style.display = 'block';
 
-  onTrackingSelectChange() {
-    const selector = document.getElementById('tracking-order-select');
-    if (!selector) return;
-    const order = window.taniStore.getOrderById(selector.value);
-    this.displayTrackingDetails(order);
+    // Determine active order
+    let activeOrder = null;
+    if (targetOrder) {
+      if (typeof targetOrder === 'string') {
+        activeOrder = userOrders.find(o => o.id === targetOrder) || allOrders.find(o => o.id === targetOrder);
+      } else {
+        activeOrder = targetOrder;
+      }
+    }
+    if (!activeOrder) {
+      activeOrder = userOrders[0];
+    }
+
+    // Render Order Tabs
+    if (tabsContainer) {
+      tabsContainer.innerHTML = userOrders.map(o => {
+        const isActive = o.id === activeOrder.id;
+        const mainItemName = o.items && o.items[0] ? o.items[0].name : 'Pesanan Pertanian';
+        const itemExtra = o.items && o.items.length > 1 ? ` (+${o.items.length - 1} barang)` : '';
+        const statusBadgeClass = o.status === 'Selesai' ? 'badge-green' : (o.status === 'Dikirim' ? 'badge-blue' : 'badge-orange');
+
+        return `
+          <button type="button" class="tracking-order-tab ${isActive ? 'active' : ''}" onclick="CustomerApp.openTrackingForOrder('${o.id}')">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <span style="font-weight:700; font-size:13px; color:${isActive ? '#34D399' : '#ECFDF5'};">${o.id}</span>
+              <span class="badge ${statusBadgeClass}" style="font-size:10px;">${o.status}</span>
+            </div>
+            <div style="font-size:12px; color:${isActive ? '#ECFDF5' : '#8BA498'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:left;">
+              ${mainItemName}${itemExtra}
+            </div>
+            <div style="font-size:11px; color:#5E7D6F; margin-top:4px; text-align:left;">
+              Resi: <strong>${o.trackingNo}</strong> • ${o.courier}
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    // Render Tracking Result Details
+    this.displayTrackingDetails(activeOrder);
   },
 
   openTrackingForOrder(orderId) {
     const order = window.taniStore.getOrderById(orderId);
+    if (!order) {
+      TaniAuth.showToast('Pesanan tidak ditemukan', 'error');
+      return;
+    }
     this.switchView('tracking');
     this.renderTracking(order);
   },
 
-  displayTrackingDetails(order) {
-    const detailsContainer = document.getElementById('tracking-result-box');
-    if (!detailsContainer) return;
-
-    if (!order) {
-      detailsContainer.innerHTML = '<p style="padding:20px; color:#6B7280;">Pilih nomor pesanan untuk melacak posisi logistik sarana pertanian Anda.</p>';
+  searchTrackingManual() {
+    const input = document.getElementById('tracking-input');
+    if (!input) return;
+    const query = input.value.trim().toUpperCase();
+    if (!query) {
+      TaniAuth.showToast('Masukkan nomor resi atau ID pesanan', 'error');
       return;
     }
 
+    const allOrders = window.taniStore.getOrders();
+    const found = allOrders.find(o => 
+      (o.trackingNo && o.trackingNo.toUpperCase() === query) || 
+      (o.id && o.id.toUpperCase() === query)
+    );
+
+    if (!found) {
+      TaniAuth.showToast(`Nomor resi/pesanan "${query}" tidak ditemukan dalam sistem gudang.`, 'error');
+      return;
+    }
+
+    this.renderTracking(found);
+    TaniAuth.showToast(`Menampilkan pelacakan untuk ${found.id}`, 'success');
+  },
+
+  displayTrackingDetails(order) {
+    const resultContainer = document.getElementById('tracking-result-container');
+    if (!resultContainer || !order) return;
+
+    const isStep1Done = true;
+    const isStep2Done = order.status !== 'Menunggu Pembayaran' && order.status !== 'Menunggu Verifikasi';
+    const isStep3Done = order.status === 'Dikirim' || order.status === 'Selesai';
+    const isStep4Done = order.status === 'Selesai';
+
     const steps = [
-      { key: 'Dibuat', label: 'Pesanan Dibuat', done: true },
-      { key: 'Diproses', label: 'Dipacking di Gudang', done: order.status !== 'Menunggu Pembayaran' },
-      { key: 'Dikirim', label: 'Kargo Berangkat', done: order.status === 'Dikirim' || order.status === 'Selesai' },
-      { key: 'Selesai', label: 'Tiba di Lahan / Penerima', done: order.status === 'Selesai' }
+      { num: 1, label: 'Pesanan Dibuat', sub: 'Terdaftar di Web Tani.SM', done: isStep1Done },
+      { num: 2, label: 'Dipacking di Gudang', sub: 'Pengecekan Kualitas & Muatan', done: isStep2Done },
+      { num: 3, label: 'Kargo Berangkat', sub: 'Dalam Perjalanan Logistik', done: isStep3Done },
+      { num: 4, label: 'Tiba di Lahan / Kebun', sub: 'Diterima Petani Pemesan', done: isStep4Done }
     ];
 
-    detailsContainer.innerHTML = `
-      <div style="background:#FFF; border:1px solid #E5E7EB; border-radius:4px; padding:20px; margin-top:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E5E7EB; padding-bottom:14px; margin-bottom:16px;">
+    resultContainer.innerHTML = `
+      <div class="tracking-result-card" style="background: #04160E; border: 1px solid var(--cust-border-subtle); border-radius: 12px; padding: 24px;">
+        <!-- Top header info -->
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(16, 185, 129, 0.2); padding-bottom:16px; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
           <div>
-            <h3 style="font-size:16px; font-weight:700;">No. Resi: <span style="color:#2E7D32;">${order.trackingNo}</span></h3>
-            <p style="font-size:12px; color:#6B7280; margin-top:2px;">Ekspedisi: <strong>${order.courier}</strong> | No. Pesanan: ${order.id}</p>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <h3 style="font-size:18px; font-weight:800; color:#ECFDF5; margin:0;">
+                Resi Kargo: <span style="color:#34D399;">${order.trackingNo}</span>
+              </h3>
+              <span class="badge ${order.status === 'Selesai' ? 'badge-green' : 'badge-orange'}">${order.status}</span>
+            </div>
+            <p style="font-size:12px; color:#8BA498; margin:4px 0 0 0;">
+              Ekspedisi: <strong style="color:#ECFDF5;">${order.courier}</strong> • No. Pesanan: <strong style="color:#34D399;">${order.id}</strong> • Tanggal: ${order.date}
+            </p>
           </div>
           <div>
-            <span class="badge ${order.status === 'Selesai' ? 'badge-green' : 'badge-orange'}" style="font-size:12px; padding:4px 8px;">${order.status}</span>
+            <button class="btn btn-secondary btn-sm" onclick="CustomerApp.openCustomerInvoice('${order.id}')" style="display:flex; align-items:center; gap:6px;">
+              <span>📄</span> Cetak Resi & Nota
+            </button>
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:24px; text-align:center;">
-          ${steps.map((s, idx) => `
-            <div style="padding:8px; border-radius:4px; background:${s.done ? '#E8F5E9' : '#F3F4F6'}; border:1px solid ${s.done ? '#A7F3D0' : '#E5E7EB'};">
-              <div style="font-size:11px; font-weight:700; color:${s.done ? '#1B5E20' : '#6B7280'};">Tahap ${idx + 1}</div>
-              <div style="font-size:12px; font-weight:600; color:${s.done ? '#1B5E20' : '#374151'}; margin-top:2px;">${s.label}</div>
-            </div>
-          `).join('')}
+        <!-- Daftar Barang yang Dipesan & Sedang Dilacak -->
+        <div style="background: rgba(6, 40, 23, 0.5); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 8px; padding: 14px; margin-bottom: 24px;">
+          <div style="font-size: 13px; font-weight: 700; color: #34D399; margin-bottom: 10px;">
+            📦 Rincian Barang yang Sedang Dikirim:
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${(order.items || []).map(item => `
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 6px 0; border-bottom: 1px dashed rgba(16, 185, 129, 0.1);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="color: #34D399;">🌱</span>
+                  <div>
+                    <strong style="color: #ECFDF5;">${item.name}</strong>
+                    ${item.isFreeGift ? '<span class="badge" style="background:#0284C7; color:#FFF; font-size:9px; margin-left:6px;">🎁 Hadiah Gratis Platinum</span>' : ''}
+                    <span style="color: #8BA498; font-size: 12px;"> (${item.qty} ${item.unit || 'unit'})</span>
+                  </div>
+                </div>
+                <div style="color: #ECFDF5; font-weight: 600;">
+                  ${item.price > 0 ? window.taniStore.formatRupiah(item.price * item.qty) : '<span style="color:#10B981;">Gratis Rp0</span>'}
+                </div>
+              </div>
+            `).join('')}
+          </div>
         </div>
 
-        <h4 style="font-size:14px; font-weight:700; margin-bottom:12px;">Histori Perjalanan Paket Pertanian:</h4>
-        <div class="timeline">
-          ${(order.trackingHistory || []).map((h, i) => `
-            <div class="timeline-item ${i === (order.trackingHistory.length - 1) ? 'active' : ''}">
-              <div class="timeline-dot"></div>
-              <div class="timeline-time">${h.time}</div>
-              <div class="timeline-text">${h.text}</div>
-            </div>
-          `).join('')}
+        <!-- 4 Step Tracker Progress Bar -->
+        <div style="margin-bottom: 28px;">
+          <div style="font-size: 13px; font-weight: 700; color: #ECFDF5; margin-bottom: 12px;">Status Tahapan Pengiriman:</div>
+          <div class="tracking-steps-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+            ${steps.map(s => `
+              <div style="padding: 12px; border-radius: 8px; background: ${s.done ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.03)'}; border: 1px solid ${s.done ? '#10B981' : 'rgba(255, 255, 255, 0.08)'}; text-align: left;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span style="display: inline-flex; width: 20px; height: 20px; border-radius: 50%; background: ${s.done ? '#10B981' : '#374151'}; color: #FFF; font-size: 11px; font-weight: 800; align-items: center; justify-content: center;">
+                    ${s.done ? '✓' : s.num}
+                  </span>
+                  <span style="font-weight: 700; font-size: 12px; color: ${s.done ? '#34D399' : '#8BA498'};">Tahap ${s.num}</span>
+                </div>
+                <div style="font-size: 13px; font-weight: 700; color: #ECFDF5;">${s.label}</div>
+                <div style="font-size: 11px; color: #8BA498; margin-top: 2px;">${s.sub}</div>
+              </div>
+            `).join('')}
+          </div>
         </div>
 
-        <div style="margin-top:20px; padding:12px; background:#F9FAFB; border-radius:4px; font-size:12px; color:#4B5563;">
-          <strong>Alamat Tujuan:</strong> ${order.shippingAddress} (Penerima: ${order.customerName} - ${order.phone})
+        <!-- Timeline Logistik -->
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 13px; font-weight: 700; color: #ECFDF5; margin-bottom: 12px;">Riwayat Posisi & Checkpoint Logistik:</div>
+          <div class="timeline" style="border-left: 2px solid rgba(16, 185, 129, 0.3); margin-left: 10px; padding-left: 18px; display: flex; flex-direction: column; gap: 14px;">
+            ${(order.trackingHistory || []).map((h, i) => `
+              <div style="position: relative;">
+                <div style="position: absolute; left: -25px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: ${i === order.trackingHistory.length - 1 ? '#34D399' : '#059669'}; border: 2px solid #04160E;"></div>
+                <div style="font-size: 11px; color: #34D399; font-weight: 700;">${h.time}</div>
+                <div style="font-size: 13px; color: #ECFDF5; margin-top: 2px;">${h.text}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Destinasi Pengiriman -->
+        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--cust-border-subtle); border-radius: 8px; padding: 14px; font-size: 12px; color: #8BA498;">
+          <strong style="color: #ECFDF5;">Alamat Pengiriman Lahan Petani:</strong><br>
+          ${order.shippingAddress}<br>
+          <span style="color: #34D399; font-weight: 600;">Kontak Penerima: ${order.customerName} (${order.phone})</span>
         </div>
       </div>
     `;
+  },
+
+  openCustomerInvoice(orderId) {
+    const order = window.taniStore.getOrderById(orderId);
+    if (!order) {
+      TaniAuth.showToast('Data pesanan tidak ditemukan', 'error');
+      return;
+    }
+
+    this.currentInvoiceOrderId = order.id;
+    const modal = document.getElementById('modal-customer-invoice');
+    const content = document.getElementById('modal-customer-invoice-content');
+    if (!modal || !content) return;
+
+    content.innerHTML = `
+      <div class="print-invoice-sheet" style="background:#FFF; color:#111827; padding:24px; border-radius:4px; font-family:sans-serif;">
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #10B981; padding-bottom:14px; margin-bottom:16px;">
+          <div>
+            <h2 style="margin:0; color:#065F46; font-size:20px; font-weight:800;">TANI.SM LOGISTIK PERTANIAN</h2>
+            <p style="margin:4px 0 0 0; font-size:12px; color:#4B5563;">Distribusi Benih Bersertifikat, Pupuk, & Sarana Produksi Tani</p>
+            <p style="margin:2px 0 0 0; font-size:11px; color:#6B7280;">Gudang Pusat: Jl. Raya Solo-Yogya KM 24, Ceper, Klaten | WA: 0812-3456-7890</p>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:14px; font-weight:800; color:#111827;">RESI & SURAT JALAN</div>
+            <div style="font-size:12px; color:#059669; font-weight:700;">${order.trackingNo}</div>
+            <div style="font-size:11px; color:#6B7280; margin-top:2px;">No. Pesanan: ${order.id}</div>
+          </div>
+        </div>
+
+        <!-- Meta 2 Kolom: Pengirim & Penerima -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; font-size:12px; background:#F9FAFB; padding:12px; border-radius:4px;">
+          <div>
+            <div style="font-weight:700; color:#374151; margin-bottom:4px;">PENGIRIM:</div>
+            <div>Gudang Logistik Tani.SM (Staff: Pak Joko Purnomo)</div>
+            <div>Ekspedisi: <strong>${order.courier}</strong></div>
+            <div>Tanggal Kirim: ${order.date}</div>
+          </div>
+          <div>
+            <div style="font-weight:700; color:#374151; margin-bottom:4px;">PENERIMA / PEMESAN:</div>
+            <div><strong>${order.customerName}</strong> (${order.phone})</div>
+            <div>Tujuan Lahan: ${order.shippingAddress}</div>
+            <div>Status: <span class="badge ${order.status === 'Selesai' ? 'badge-green' : 'badge-orange'}" style="font-size:11px;">${order.status}</span></div>
+          </div>
+        </div>
+
+        <!-- Tabel Barang -->
+        <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:16px;">
+          <thead>
+            <tr style="background:#E5E7EB; color:#111827; text-align:left;">
+              <th style="padding:8px; border:1px solid #D1D5DB; width:30px; text-align:center;">No</th>
+              <th style="padding:8px; border:1px solid #D1D5DB;">Nama Barang Pertanian</th>
+              <th style="padding:8px; border:1px solid #D1D5DB; text-align:center;">Jumlah</th>
+              <th style="padding:8px; border:1px solid #D1D5DB; text-align:right;">Harga Satuan</th>
+              <th style="padding:8px; border:1px solid #D1D5DB; text-align:right;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(order.items || []).map((it, idx) => `
+              <tr>
+                <td style="padding:8px; border:1px solid #D1D5DB; text-align:center;">${idx + 1}</td>
+                <td style="padding:8px; border:1px solid #D1D5DB;">
+                  <strong>${it.name}</strong>
+                  ${it.isFreeGift ? '<span style="color:#0284C7; font-weight:700; margin-left:4px;">(Bonus Free Product Platinum)</span>' : ''}
+                </td>
+                <td style="padding:8px; border:1px solid #D1D5DB; text-align:center;">${it.qty} ${it.unit || ''}</td>
+                <td style="padding:8px; border:1px solid #D1D5DB; text-align:right;">${it.price > 0 ? window.taniStore.formatRupiah(it.price) : 'Rp 0'}</td>
+                <td style="padding:8px; border:1px solid #D1D5DB; text-align:right; font-weight:600;">${it.price > 0 ? window.taniStore.formatRupiah(it.price * it.qty) : 'Gratis'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <!-- Ringkasan Pembayaran & Resi -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; font-size:12px;">
+          <div style="max-width:320px;">
+            <div>Metode Pembayaran: <strong>${order.paymentMethod}</strong></div>
+            <div>Status Bayar: <strong>${order.paymentStatus}</strong></div>
+            ${order.memberTier ? `<div style="margin-top:4px; color:#059669; font-weight:700;">★ Member Tier: ${order.memberTier.toUpperCase()}</div>` : ''}
+            ${order.pointsEarned ? `<div style="color:#059669;">★ Poin Belanja Diterima: +${order.pointsEarned} Poin</div>` : ''}
+            <div style="margin-top:8px; font-size:11px; color:#6B7280; font-style:italic;">
+              Catatan: Periksa keutuhan karung dan segel sebelum kurir meninggalkan lahan Anda.
+            </div>
+          </div>
+          <div style="width:260px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>Subtotal:</span>
+              <span>${window.taniStore.formatRupiah(order.subtotal || order.total)}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+              <span>Ongkos Kirim:</span>
+              <span>${window.taniStore.formatRupiah(order.shippingCost || 0)}</span>
+            </div>
+            ${order.discount ? `
+              <div style="display:flex; justify-content:space-between; margin-bottom:4px; color:#DC2626;">
+                <span>Diskon Kupon:</span>
+                <span>- ${window.taniStore.formatRupiah(order.discount)}</span>
+              </div>
+            ` : ''}
+            ${order.tierDiscount ? `
+              <div style="display:flex; justify-content:space-between; margin-bottom:4px; color:#059669;">
+                <span>Diskon Member ${order.memberTier ? order.memberTier.toUpperCase() : ''}:</span>
+                <span>- ${window.taniStore.formatRupiah(order.tierDiscount)}</span>
+              </div>
+            ` : ''}
+            <div style="display:flex; justify-content:space-between; padding-top:6px; border-top:1px solid #D1D5DB; font-weight:800; font-size:14px; color:#065F46;">
+              <span>Total Pembayaran:</span>
+              <span>${window.taniStore.formatRupiah(order.total)}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tanda Tangan -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; border-top:1px dashed #D1D5DB; padding-top:16px; margin-top:16px; font-size:11px; text-align:center;">
+          <div>
+            <div>Staff Pergudangan Tani.SM</div>
+            <div style="height:48px;"></div>
+            <div>( _____________________ )</div>
+          </div>
+          <div>
+            <div>Petani Penerima / Mitra</div>
+            <div style="height:48px;"></div>
+            <div>( <strong>${order.customerName}</strong> )</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    modal.classList.add('active');
+  },
+
+  trackOrderFromInvoice() {
+    this.closeAllModals();
+    if (this.currentInvoiceOrderId) {
+      this.openTrackingForOrder(this.currentInvoiceOrderId);
+      TaniAuth.showToast(`Otomatis melacak barang pesanan ${this.currentInvoiceOrderId}`, 'info');
+    } else {
+      this.switchView('tracking');
+    }
+  },
+
+  openMemberBenefitsModal() {
+    const auth = window.taniStore.getAuth();
+    const settings = window.taniStore.getMemberSettings();
+    const currentTier = auth ? (auth.tier || 'silver') : 'silver';
+    const bonusProduct = window.taniStore.getProductById(settings.freeProductId) || { name: 'Tray Semai Bibit 128 Lubang' };
+
+    const modal = document.getElementById('modal-member-benefits');
+    const content = document.getElementById('modal-member-benefits-content');
+    if (!modal || !content) return;
+
+    content.innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <!-- Header notice -->
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 14px; font-size: 13px; color: #ECFDF5;">
+          Level Anda saat ini: <span class="badge-tier-pill tier-${currentTier}">MEMBER ${currentTier.toUpperCase()}</span>
+          • Evaluasi berkala dihitung setiap <strong>${settings.evaluationPeriodDays} hari</strong> berdasarkan total transaksi Anda.
+        </div>
+
+        <!-- 3 Tier Cards Grid -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+          <!-- 1. SILVER -->
+          <div style="background: #04160E; border: ${currentTier === 'silver' ? '2px solid #94A3B8' : '1px solid rgba(255, 255, 255, 0.1)'}; border-radius: 10px; padding: 18px; position:relative;">
+            ${currentTier === 'silver' ? '<span class="badge badge-green" style="position:absolute; top:12px; right:12px;">Level Anda</span>' : ''}
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+              <span style="font-size:26px;">🥈</span>
+              <h4 style="margin:0; color:#CBD5E1; font-size:16px; font-weight:800;">1. SILVER</h4>
+            </div>
+            <div style="font-size:11px; color:#8BA498; margin-bottom:12px;">Syarat: Member Baru (Akumulasi Rp 0)</div>
+            <div style="font-size:12px; font-weight:700; color:#34D399; margin-bottom:8px;">Benefit:</div>
+            <ul style="margin:0; padding-left:18px; font-size:12px; color:#E2E8F0; line-height:1.6;">
+              <li>Harga khusus member pada produk tertentu</li>
+              <li>Mendapat informasi promo dan produk terbaru</li>
+              <li>Dapat mengumpulkan poin belanja (${settings.pointsMultiplierSilver}x)</li>
+              <li>Mendapat kupon promo khusus member</li>
+            </ul>
+          </div>
+
+          <!-- 2. GOLD -->
+          <div style="background: #04160E; border: ${currentTier === 'gold' ? '2px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.1)'}; border-radius: 10px; padding: 18px; position:relative;">
+            ${currentTier === 'gold' ? '<span class="badge badge-green" style="position:absolute; top:12px; right:12px;">Level Anda</span>' : ''}
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+              <span style="font-size:26px;">🥇</span>
+              <h4 style="margin:0; color:#FBBF24; font-size:16px; font-weight:800;">2. GOLD</h4>
+            </div>
+            <div style="font-size:11px; color:#8BA498; margin-bottom:12px;">
+              Syarat: Akumulasi belanja <strong>${window.taniStore.formatRupiah(settings.goldMinSpend)}</strong> dlm ${settings.evaluationPeriodDays} hari
+            </div>
+            <div style="font-size:12px; font-weight:700; color:#34D399; margin-bottom:8px;">Benefit:</div>
+            <ul style="margin:0; padding-left:18px; font-size:12px; color:#FEF3C7; line-height:1.6;">
+              <li><strong>Semua benefit Silver</strong></li>
+              <li>Diskon khusus Gold <strong>${settings.goldDiscountPercent}%</strong> pada produk yang memenuhi syarat</li>
+              <li>Poin <strong>${settings.pointsMultiplierGold}x lebih banyak</strong> dibanding Silver</li>
+              <li>Mendapat kupon promo eksklusif Gold</li>
+              <li>Mendapat informasi promo lebih awal</li>
+            </ul>
+          </div>
+
+          <!-- 3. PLATINUM -->
+          <div style="background: #04160E; border: ${currentTier === 'platinum' ? '2px solid #38BDF8' : '1px solid rgba(255, 255, 255, 0.1)'}; border-radius: 10px; padding: 18px; position:relative;">
+            ${currentTier === 'platinum' ? '<span class="badge badge-green" style="position:absolute; top:12px; right:12px;">Level Anda</span>' : ''}
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+              <span style="font-size:26px;">💎</span>
+              <h4 style="margin:0; color:#38BDF8; font-size:16px; font-weight:800;">3. PLATINUM</h4>
+            </div>
+            <div style="font-size:11px; color:#8BA498; margin-bottom:12px;">
+              Syarat: Akumulasi belanja <strong>${window.taniStore.formatRupiah(settings.platinumMinSpend)}</strong> dlm ${settings.evaluationPeriodDays} hari
+            </div>
+            <div style="font-size:12px; font-weight:700; color:#34D399; margin-bottom:8px;">Benefit:</div>
+            <ul style="margin:0; padding-left:18px; font-size:12px; color:#E0F2FE; line-height:1.6;">
+              <li><strong>Semua benefit Gold</strong></li>
+              <li>Diskon lebih besar <strong>${settings.platinumDiscountPercent}%</strong> pada produk yang memenuhi syarat</li>
+              <li>Poin <strong>paling banyak (${settings.pointsMultiplierPlatinum}x)</strong></li>
+              <li>Prioritas pelayanan & pengemasan cepat</li>
+              <li>Mendapat promo eksklusif Platinum</li>
+              <li>
+                <strong>Bonus Free Product:</strong> 1 unit <em>${bonusProduct.name}</em> (Khusus belanja min. ${window.taniStore.formatRupiah(settings.freeProductMinSpend)})
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Catatan Penting & Transparansi Aturan -->
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--cust-border-subtle); border-radius: 8px; padding: 14px; font-size: 12px; color: #8BA498; line-height: 1.6;">
+          <strong style="color:#ECFDF5;">📌 Ketentuan & Sistem Evaluasi Berkala:</strong>
+          <ul style="margin:6px 0 0 0; padding-left:18px;">
+            <li>Level member otomatis dievaluasi secara berkala berdasarkan aktivitas transaksi dalam periode <strong>${settings.evaluationPeriodDays} hari</strong> terakhir.</li>
+            <li>Diskon member tier dilindungi batas maksimum (cap Rp ${Number(settings.maxDiscountCap).toLocaleString('id-ID')}) untuk menjaga kewajaran sistem usaha.</li>
+            <li>Bonus free product Platinum hanya diberikan 1 unit per transaksi yang memenuhi batas minimum belanja dan berlaku untuk produk promo yang ditentukan admin (tidak gratis tanpa batas).</li>
+            <li>Benefit level yang lebih tinggi mencakup seluruh benefit level sebelumnya.</li>
+          </ul>
+        </div>
+      </div>
+    `;
+
+    modal.classList.add('active');
   },
 
   // ==========================================
@@ -1152,14 +1765,14 @@ const CustomerApp = {
   // ==========================================
   renderWishlist() {
     const wishlistIds = window.taniStore.getWishlist();
-    const container = document.getElementById('wishlist-grid');
+    const container = document.getElementById('wishlist-products-grid') || document.getElementById('wishlist-grid');
     if (!container) return;
 
     if (wishlistIds.length === 0) {
       container.innerHTML = `
-        <div style="grid-column: 1 / -1; padding: 48px; text-align: center; background: #FFF; border: 1px solid #E5E7EB; border-radius: 4px;">
-          <p style="font-weight: 600; font-size: 15px; color: #4B5563;">Belum ada sarana tani yang Anda simpan di Wishlist.</p>
-          <p style="font-size: 13px; color: #9CA3AF; margin-top: 6px;">Simpan benih atau alat impian untuk persiapan musim tanam berikutnya.</p>
+        <div style="grid-column: 1 / -1; padding: 48px; text-align: center; background: #04160E; border: 1px solid var(--cust-border-subtle); border-radius: 8px;">
+          <p style="font-weight: 600; font-size: 15px; color: #ECFDF5;">Belum ada sarana tani yang Anda simpan di Wishlist.</p>
+          <p style="font-size: 13px; color: #8BA498; margin-top: 6px;">Simpan benih atau alat impian untuk persiapan musim tanam berikutnya.</p>
           <button class="btn btn-primary" style="margin-top: 14px;" onclick="CustomerApp.switchView('catalog')">Eksplor Katalog</button>
         </div>
       `;
@@ -1174,7 +1787,6 @@ const CustomerApp = {
     const isNowWished = window.taniStore.toggleWishlist(productId);
     TaniAuth.showToast(isNowWished ? 'Produk disimpan ke Wishlist' : 'Produk dihapus dari Wishlist', 'info');
 
-    // Re-render modal if open
     const modal = document.getElementById('modal-product-detail');
     if (modal && modal.classList.contains('active')) {
       this.openProductDetail(productId);
@@ -1195,48 +1807,60 @@ const CustomerApp = {
     container.innerHTML = reviews.map(r => {
       const product = window.taniStore.getProductById(r.productId);
       return `
-        <div style="background:#FFF; border:1px solid #E5E7EB; border-radius:4px; padding:18px; margin-bottom:14px;">
+        <div style="background: #04160E; border: 1px solid var(--cust-border-subtle); border-radius: 8px; padding: 18px; margin-bottom: 14px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
             <div>
-              <strong>${r.customerName}</strong>
-              <div style="font-size:12px; color:#2E7D32; font-weight:600;">Produk: ${product ? product.name : 'Sarana Pertanian'}</div>
+              <strong style="color: #ECFDF5;">${r.customerName}</strong>
+              <div style="font-size:12px; color:#34D399; font-weight:600;">Produk: ${product ? product.name : 'Sarana Pertanian'}</div>
             </div>
             <div style="text-align:right;">
               <span style="color:#D97706; font-size:15px; font-weight:700;">${'★'.repeat(r.rating)}</span>
-              <div style="font-size:11px; color:#9CA3AF; margin-top:2px;">${r.date}</div>
+              <div style="font-size:11px; color:#8BA498; margin-top:2px;">${r.date}</div>
             </div>
           </div>
-          <p style="font-size:13px; color:#374151; line-height:1.5;">"${r.comment}"</p>
+          <p style="font-size:13px; color:#D1FAE5; line-height:1.5; margin:0;">"${r.comment}"</p>
         </div>
       `;
     }).join('');
   },
 
-  openReviewModal(productId, productName) {
-    const modal = document.getElementById('modal-review');
+  openAddReviewModal(productId = null) {
+    const modal = document.getElementById('modal-add-review');
     if (!modal) return;
-
-    document.getElementById('review-product-id').value = productId;
-    document.getElementById('review-product-name').textContent = productName;
-    document.getElementById('review-comment').value = '';
+    const select = document.getElementById('review-product-select');
+    if (select) {
+      const products = window.taniStore.getProducts();
+      select.innerHTML = products.map(p => `
+        <option value="${p.id}" ${productId === p.id ? 'selected' : ''}>${p.name}</option>
+      `).join('');
+    }
+    const commentInput = document.getElementById('review-comment-input');
+    if (commentInput) commentInput.value = '';
     modal.classList.add('active');
   },
 
-  submitReviewForm() {
+  submitReview() {
     const auth = window.taniStore.getAuth();
-    const prodId = document.getElementById('review-product-id').value;
-    const rating = parseInt(document.getElementById('review-rating-select').value) || 5;
-    const comment = document.getElementById('review-comment').value.trim();
+    const select = document.getElementById('review-product-select');
+    const ratingSelect = document.getElementById('review-rating-select');
+    const commentInput = document.getElementById('review-comment-input');
+    const prodId = select ? select.value : '';
+    const rating = ratingSelect ? parseInt(ratingSelect.value) || 5 : 5;
+    const comment = commentInput ? commentInput.value.trim() : '';
 
+    if (!prodId) {
+      TaniAuth.showToast('Pilih produk pertanian yang ingin diulas', 'error');
+      return;
+    }
     if (!comment) {
-      TaniAuth.showToast('Mohon tulis ulasan pengalaman penggunaan produk di lahan Anda', 'error');
+      TaniAuth.showToast('Mohon tulis testimoni pengalaman Anda', 'error');
       return;
     }
 
     const review = {
       id: 'REV-' + Date.now(),
       productId: prodId,
-      customerName: auth ? auth.name : 'Petani Tani.SM',
+      customerName: auth ? auth.name : 'Petani Mitra',
       rating: rating,
       date: new Date().toISOString().slice(0, 10),
       comment: comment
@@ -1244,12 +1868,20 @@ const CustomerApp = {
 
     window.taniStore.addReview(review);
     this.closeAllModals();
-    TaniAuth.showToast('Terima kasih! Ulasan Anda sangat berharga bagi sesama petani.', 'success');
+    TaniAuth.showToast('Ulasan berhasil dikirim!', 'success');
     this.renderReviews();
   },
 
+  openReviewModal(productId, productName) {
+    this.openAddReviewModal(productId);
+  },
+
+  submitReviewForm() {
+    this.submitReview();
+  },
+
   // ==========================================
-  // 9. TIPS PERTANIAN
+  // 9. EDUKASI PERTANIAN
   // ==========================================
   renderTips() {
     const tips = window.taniStore.getTips();
@@ -1276,55 +1908,97 @@ const CustomerApp = {
     const modal = document.getElementById('modal-tip-detail');
     if (!modal) return;
 
-    document.getElementById('tip-modal-title').textContent = tip.title;
-    document.getElementById('tip-modal-meta').textContent = `${tip.category} • Oleh: ${tip.author} • ${tip.date} • ${tip.readTime}`;
-    document.getElementById('tip-modal-body').innerHTML = tip.content;
+    document.getElementById('modal-tip-title').textContent = tip.title;
+    document.getElementById('modal-tip-body').innerHTML = `
+      <div style="font-size:12px; color:#8BA498; margin-bottom:12px;">${tip.category} • Oleh: ${tip.author} • ${tip.date} • ${tip.readTime}</div>
+      <div style="font-size:13px; color:#ECFDF5; line-height:1.7;">${tip.content}</div>
+    `;
     modal.classList.add('active');
   },
 
   // ==========================================
-  // 10. PROFIL CUSTOMER
+  // 10. PROFIL PETANI & KEANGGOTAAN
   // ==========================================
   renderProfile() {
     const auth = window.taniStore.getAuth();
     if (!auth) return;
 
     const cust = window.taniStore.getCustomerById(auth.id) || auth;
+    const tierInfo = window.taniStore.getTierInfo(cust.tier || 'silver');
+    const settings = window.taniStore.getMemberSettings();
+    const periodSpend = window.taniStore.calculateCustomerPeriodSpend(cust.id, settings.evaluationPeriodDays);
 
-    document.getElementById('profile-name').textContent = cust.name;
-    document.getElementById('profile-poktan').textContent = cust.kelompokTani || 'Petani Mandiri';
-    document.getElementById('profile-phone').textContent = cust.phone || '-';
-    document.getElementById('profile-email').textContent = cust.email || '-';
-    document.getElementById('profile-address').textContent = cust.address || '-';
-    document.getElementById('profile-lahan').textContent = (cust.lahanHa || 1.2) + ' Hektar';
-    document.getElementById('profile-komoditas').textContent = cust.komoditasUtama || 'Padi & Hortikultura';
+    const tierIconEl = document.getElementById('profile-tier-icon');
+    const tierNameEl = document.getElementById('profile-tier-name');
+    const pointsEl = document.getElementById('profile-points-display');
+    const perksEl = document.getElementById('profile-member-perks-summary');
+    const periodSpendEl = document.getElementById('profile-period-spend-info');
+
+    if (tierIconEl) tierIconEl.textContent = tierInfo.badge;
+    if (tierNameEl) tierNameEl.textContent = `MEMBER ${tierInfo.name}`;
+    if (pointsEl) pointsEl.textContent = `${(cust.points || 0).toLocaleString('id-ID')} Poin`;
+    if (periodSpendEl) periodSpendEl.textContent = `Total Transaksi ${settings.evaluationPeriodDays || 90} Hari Terakhir: ${window.taniStore.formatRupiah(periodSpend)}`;
+
+    if (perksEl) {
+      perksEl.innerHTML = `
+        <div style="font-weight:600; color:#34D399; margin-bottom:4px;">Keuntungan Aktif Tingkat ${tierInfo.name}:</div>
+        <ul style="margin:0; padding-left:18px;">
+          ${tierInfo.perks.map(p => `<li>${p}</li>`).join('')}
+        </ul>
+      `;
+    }
 
     // Form inputs for editing
-    document.getElementById('input-profile-name').value = cust.name || '';
-    document.getElementById('input-profile-poktan').value = cust.kelompokTani || '';
-    document.getElementById('input-profile-phone').value = cust.phone || '';
-    document.getElementById('input-profile-address').value = cust.address || '';
-    document.getElementById('input-profile-komoditas').value = cust.komoditasUtama || '';
+    const nameInput = document.getElementById('prof-name') || document.getElementById('input-profile-name');
+    const phoneInput = document.getElementById('prof-phone') || document.getElementById('input-profile-phone');
+    const emailInput = document.getElementById('prof-email') || document.getElementById('input-profile-email');
+    const poktanInput = document.getElementById('prof-poktan') || document.getElementById('input-profile-poktan');
+    const lahanInput = document.getElementById('prof-lahan') || document.getElementById('input-profile-lahan');
+    const komoditasInput = document.getElementById('prof-komoditas') || document.getElementById('input-profile-komoditas');
+    const addressInput = document.getElementById('prof-address') || document.getElementById('input-profile-address');
+
+    if (nameInput) nameInput.value = cust.name || '';
+    if (phoneInput) phoneInput.value = cust.phone || '';
+    if (emailInput) emailInput.value = cust.email || '';
+    if (poktanInput) poktanInput.value = cust.kelompokTani || '';
+    if (lahanInput) lahanInput.value = cust.lahanHa || 1.0;
+    if (komoditasInput) komoditasInput.value = cust.komoditasUtama || '';
+    if (addressInput) addressInput.value = cust.address || '';
   },
 
-  saveProfileData() {
+  saveProfile(event) {
+    if (event && event.preventDefault) event.preventDefault();
     const auth = window.taniStore.getAuth();
     if (!auth) return;
 
+    const nameInput = document.getElementById('prof-name') || document.getElementById('input-profile-name');
+    const phoneInput = document.getElementById('prof-phone') || document.getElementById('input-profile-phone');
+    const emailInput = document.getElementById('prof-email') || document.getElementById('input-profile-email');
+    const poktanInput = document.getElementById('prof-poktan') || document.getElementById('input-profile-poktan');
+    const lahanInput = document.getElementById('prof-lahan') || document.getElementById('input-profile-lahan');
+    const komoditasInput = document.getElementById('prof-komoditas') || document.getElementById('input-profile-komoditas');
+    const addressInput = document.getElementById('prof-address') || document.getElementById('input-profile-address');
+
     const updated = {
       ...auth,
-      name: document.getElementById('input-profile-name').value.trim(),
-      kelompokTani: document.getElementById('input-profile-poktan').value.trim(),
-      phone: document.getElementById('input-profile-phone').value.trim(),
-      address: document.getElementById('input-profile-address').value.trim(),
-      komoditasUtama: document.getElementById('input-profile-komoditas').value.trim()
+      name: nameInput ? nameInput.value.trim() : auth.name,
+      phone: phoneInput ? phoneInput.value.trim() : auth.phone,
+      email: emailInput ? emailInput.value.trim() : (auth.email || ''),
+      kelompokTani: poktanInput ? poktanInput.value.trim() : (auth.kelompokTani || ''),
+      lahanHa: lahanInput ? parseFloat(lahanInput.value) || 1 : (auth.lahanHa || 1),
+      komoditasUtama: komoditasInput ? komoditasInput.value.trim() : (auth.komoditasUtama || ''),
+      address: addressInput ? addressInput.value.trim() : (auth.address || '')
     };
 
     window.taniStore.setAuth(updated);
     window.taniStore.saveCustomer(updated);
     this.renderHeaderUserInfo();
     this.renderProfile();
-    TaniAuth.showToast('Data profil petani berhasil diperbarui!', 'success');
+    TaniAuth.showToast('Data profil petani & keanggotaan berhasil diperbarui!', 'success');
+  },
+
+  saveProfileData() {
+    this.saveProfile();
   },
 
   closeAllModals() {

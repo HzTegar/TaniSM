@@ -16,7 +16,8 @@ class TaniStore {
       BANNERS: 'tanism_banners',
       CART: 'tanism_cart',
       WISHLIST: 'tanism_wishlist',
-      AUTH: 'tanism_auth_session'
+      AUTH: 'tanism_auth_session',
+      MEMBER_SETTINGS: 'tanism_member_settings'
     };
 
     this.initData();
@@ -31,6 +32,9 @@ class TaniStore {
     }
     if (!localStorage.getItem(this.STORAGE_KEYS.CUSTOMERS)) {
       localStorage.setItem(this.STORAGE_KEYS.CUSTOMERS, JSON.stringify(SEED_DATA.customers));
+    }
+    if (!localStorage.getItem(this.STORAGE_KEYS.MEMBER_SETTINGS)) {
+      localStorage.setItem(this.STORAGE_KEYS.MEMBER_SETTINGS, JSON.stringify(SEED_DATA.memberSettings));
     }
     if (!localStorage.getItem(this.STORAGE_KEYS.ORDERS)) {
       localStorage.setItem(this.STORAGE_KEYS.ORDERS, JSON.stringify(SEED_DATA.orders));
@@ -65,16 +69,44 @@ class TaniStore {
         phone: '0812-3456-7890',
         email: 'budi.santoso@pertanian.id',
         kelompokTani: 'Poktan Makmur Jaya (Klaten)',
-        address: 'Dusun Jetis RT 03/RW 02, Desa Ceper, Kec. Ceper, Kab. Klaten, Jawa Tengah 57465'
+        address: 'Dusun Jetis RT 03/RW 02, Desa Ceper, Kec. Ceper, Kab. Klaten, Jawa Tengah 57465',
+        tier: 'silver',
+        points: 124
       };
       localStorage.setItem(this.STORAGE_KEYS.AUTH, JSON.stringify(defaultAuth));
+    }
+
+    this.ensureCustomerMembershipData();
+  }
+
+  ensureCustomerMembershipData() {
+    const custs = this.getCustomers();
+    let updated = false;
+    custs.forEach(c => {
+      if (!c.tier) {
+        c.tier = (c.totalSpent >= 5000000) ? 'platinum' : ((c.totalSpent >= 1500000) ? 'gold' : 'silver');
+        c.points = c.points || Math.floor((c.totalSpent || 0) / 10000);
+        c.periodSpent = c.periodSpent || c.totalSpent || 0;
+        updated = true;
+      }
+    });
+    if (updated) {
+      localStorage.setItem(this.STORAGE_KEYS.CUSTOMERS, JSON.stringify(custs));
     }
   }
 
   // --- Auth Methods ---
   getAuth() {
     try {
-      return JSON.parse(localStorage.getItem(this.STORAGE_KEYS.AUTH)) || null;
+      const auth = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.AUTH)) || null;
+      if (auth && auth.role === 'customer' && auth.id) {
+        const freshCust = this.getCustomerById(auth.id);
+        if (freshCust) {
+          auth.tier = freshCust.tier || 'silver';
+          auth.points = freshCust.points || 0;
+        }
+      }
+      return auth;
     } catch {
       return null;
     }
@@ -93,7 +125,9 @@ class TaniStore {
       phone: cust.phone,
       email: cust.email,
       kelompokTani: cust.kelompokTani,
-      address: cust.address
+      address: cust.address,
+      tier: cust.tier || 'silver',
+      points: cust.points || 0
     };
     this.setAuth(session);
     return session;
@@ -409,8 +443,265 @@ class TaniStore {
     return wishlist.includes(productId);
   }
 
-  isWishlisted(productId) {
-    return this.getWishlist().includes(productId);
+  // --- Member & Loyalty Engine ---
+  getMemberSettings() {
+    try {
+      const stored = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.MEMBER_SETTINGS));
+      if (stored) return { ...SEED_DATA.memberSettings, ...stored };
+    } catch (e) {}
+    return { ...SEED_DATA.memberSettings };
+  }
+
+  saveMemberSettings(newSettings) {
+    const current = this.getMemberSettings();
+    const updated = { ...current, ...newSettings };
+    localStorage.setItem(this.STORAGE_KEYS.MEMBER_SETTINGS, JSON.stringify(updated));
+    return updated;
+  }
+
+  getTierInfo(tierKey = 'silver') {
+    const key = (tierKey || 'silver').toLowerCase();
+    const settings = this.getMemberSettings();
+    const bonusProduct = this.getProductById(settings.freeProductId) || {
+      id: settings.freeProductId,
+      name: 'Tray Semai Bibit 128 Lubang Tebal',
+      price: 8500
+    };
+
+    const tiers = {
+      silver: {
+        key: 'silver',
+        name: 'SILVER',
+        badge: '🥈',
+        color: '#94A3B8',
+        bgGradient: 'linear-gradient(135deg, #334155 0%, #1e293b 100%)',
+        textColor: '#E2E8F0',
+        minSpend: 0,
+        nextTier: 'gold',
+        nextMinSpend: settings.goldMinSpend,
+        pointsMultiplier: Number(settings.pointsMultiplierSilver) || 1.0,
+        discountPercent: 0,
+        hasMemberPrice: true,
+        priorityService: false,
+        freeProductEligible: false,
+        perks: [
+          'Harga khusus member pada produk tertentu',
+          'Mendapat informasi promo dan produk terbaru',
+          'Dapat mengumpulkan poin belanja (1x)',
+          'Mendapat promo kupon khusus member'
+        ]
+      },
+      gold: {
+        key: 'gold',
+        name: 'GOLD',
+        badge: '🥇',
+        color: '#F59E0B',
+        bgGradient: 'linear-gradient(135deg, #B45309 0%, #78350F 100%)',
+        textColor: '#FEF3C7',
+        minSpend: settings.goldMinSpend,
+        nextTier: 'platinum',
+        nextMinSpend: settings.platinumMinSpend,
+        pointsMultiplier: Number(settings.pointsMultiplierGold) || 1.5,
+        discountPercent: Number(settings.goldDiscountPercent) || 5,
+        hasMemberPrice: true,
+        priorityService: false,
+        earlyPromoAccess: true,
+        freeProductEligible: false,
+        perks: [
+          'Semua benefit Silver',
+          `Diskon khusus Gold ${settings.goldDiscountPercent}% pada produk yang memenuhi syarat`,
+          `Mendapat poin ${settings.pointsMultiplierGold}x lebih banyak dibanding Silver`,
+          'Mendapat promo eksklusif Gold',
+          'Mendapat informasi promo lebih awal'
+        ]
+      },
+      platinum: {
+        key: 'platinum',
+        name: 'PLATINUM',
+        badge: '💎',
+        color: '#38BDF8',
+        bgGradient: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+        textColor: '#E0F2FE',
+        minSpend: settings.platinumMinSpend,
+        nextTier: null,
+        nextMinSpend: null,
+        pointsMultiplier: Number(settings.pointsMultiplierPlatinum) || 2.0,
+        discountPercent: Number(settings.platinumDiscountPercent) || 10,
+        hasMemberPrice: true,
+        priorityService: true,
+        earlyPromoAccess: true,
+        freeProductEligible: true,
+        freeProductMinSpend: settings.freeProductMinSpend,
+        bonusProduct: bonusProduct,
+        freeProductQty: settings.freeProductQty || 1,
+        perks: [
+          'Semua benefit Gold',
+          `Diskon lebih besar ${settings.platinumDiscountPercent}% pada produk yang memenuhi syarat`,
+          `Mendapat poin paling banyak (${settings.pointsMultiplierPlatinum}x)`,
+          'Prioritas pelayanan pengemasan & pengiriman cepat',
+          'Mendapat promo eksklusif Platinum',
+          `Berkesempatan mendapatkan bonus free product: ${bonusProduct.name} (Min. Transaksi ${this.formatRupiah(settings.freeProductMinSpend)})`
+        ]
+      }
+    };
+
+    return tiers[key] || tiers.silver;
+  }
+
+  // Menghitung total transaksi pelanggan dalam periode evaluasi tertentu (default 90 hari)
+  calculateCustomerPeriodSpend(customerId, periodDays = null) {
+    const settings = this.getMemberSettings();
+    const days = periodDays || settings.evaluationPeriodDays || 90;
+    const orders = this.getOrders().filter(o => o.customerId === customerId && o.status !== 'Dibatalkan');
+    
+    const now = new Date();
+    const cutoffDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
+
+    let total = 0;
+    orders.forEach(o => {
+      const orderDate = new Date(o.date ? o.date.replace(' ', 'T') : now);
+      if (!isNaN(orderDate.getTime())) {
+        if (orderDate >= cutoffDate) {
+          total += Number(o.total || 0);
+        }
+      } else {
+        total += Number(o.total || 0);
+      }
+    });
+
+    if (total === 0) {
+      const cust = this.getCustomerById(customerId);
+      if (cust && cust.periodSpent) {
+        total = Number(cust.periodSpent);
+      }
+    }
+
+    return total;
+  }
+
+  // Evaluasi kenaikan/penurunan level berdasarkan aktivitas transaksi dalam periode evaluasi
+  evaluateCustomerTier(customerId) {
+    const cust = this.getCustomerById(customerId);
+    if (!cust) return null;
+
+    const settings = this.getMemberSettings();
+    const periodSpend = this.calculateCustomerPeriodSpend(customerId, settings.evaluationPeriodDays);
+    const oldTier = cust.tier || 'silver';
+
+    let newTier = 'silver';
+    if (periodSpend >= Number(settings.platinumMinSpend)) {
+      newTier = 'platinum';
+    } else if (periodSpend >= Number(settings.goldMinSpend)) {
+      newTier = 'gold';
+    }
+
+    cust.periodSpent = periodSpend;
+    cust.tier = newTier;
+    cust.lastEvaluated = this.getCurrentDateTime();
+    this.saveCustomer(cust);
+
+    // If active session belongs to this customer, update session
+    const auth = this.getAuth();
+    if (auth && auth.id === customerId) {
+      auth.tier = newTier;
+      auth.points = cust.points || 0;
+      this.setAuth(auth);
+    }
+
+    return {
+      customerId,
+      customerName: cust.name,
+      periodSpend,
+      oldTier,
+      newTier,
+      isChanged: oldTier !== newTier,
+      isUpgraded: (oldTier === 'silver' && (newTier === 'gold' || newTier === 'platinum')) || (oldTier === 'gold' && newTier === 'platinum')
+    };
+  }
+
+  // Evaluasi berkala seluruh pelanggan
+  evaluateAllCustomers() {
+    const customers = this.getCustomers();
+    const results = [];
+    customers.forEach(c => {
+      const res = this.evaluateCustomerTier(c.id);
+      if (res) results.push(res);
+    });
+    return results;
+  }
+
+  // Hitung benefit member untuk keranjang/checkout
+  calculateOrderMemberBenefits(customerId, cartItems, subtotal) {
+    const cust = this.getCustomerById(customerId);
+    const tierKey = cust ? (cust.tier || 'silver') : 'silver';
+    const tierInfo = this.getTierInfo(tierKey);
+    const settings = this.getMemberSettings();
+
+    // 1. Potongan Diskon Persentase Tier Member (Gold / Platinum)
+    let tierDiscount = 0;
+    if (tierInfo.discountPercent > 0) {
+      let eligibleSubtotal = 0;
+      cartItems.forEach(item => {
+        const prod = this.getProductById(item.productId);
+        if (!prod || prod.eligibleForTierDiscount !== false) {
+          eligibleSubtotal += (item.price * item.qty);
+        }
+      });
+      tierDiscount = Math.round((eligibleSubtotal * tierInfo.discountPercent) / 100);
+      // Batas maksimum diskon agar sistem tidak merugikan perusahaan / masuk akal
+      const maxCap = Number(settings.maxDiscountCap) || 150000;
+      if (tierDiscount > maxCap) {
+        tierDiscount = maxCap;
+      }
+    }
+
+    // 2. Bonus Free Product Platinum (HANYA jika Platinum dan belanja >= freeProductMinSpend)
+    let freeBonusProduct = null;
+    let isFreeBonusEligible = false;
+    if (tierInfo.freeProductEligible && subtotal >= Number(settings.freeProductMinSpend)) {
+      isFreeBonusEligible = true;
+      const bonusProd = this.getProductById(settings.freeProductId) || tierInfo.bonusProduct;
+      if (bonusProd) {
+        freeBonusProduct = {
+          productId: bonusProd.id,
+          name: bonusProd.name,
+          unit: bonusProd.unit || '1 Pcs',
+          qty: 1, // Dibatasi 1 unit per transaksi yang memenuhi syarat, TIDAK gratis tanpa batas!
+          price: 0,
+          originalPrice: bonusProd.price || 0,
+          isFreeGift: true,
+          label: 'Bonus Spesial Platinum (1x Gratis)'
+        };
+      }
+    }
+
+    // 3. Poin Belanja yang didapatkan
+    const pointsRatio = Number(settings.pointsPerRupiah) || 10000;
+    const basePoints = Math.floor(subtotal / pointsRatio);
+    const pointsEarned = Math.floor(basePoints * (tierInfo.pointsMultiplier || 1.0));
+
+    return {
+      tierKey,
+      tierInfo,
+      tierDiscount,
+      isFreeBonusEligible,
+      freeBonusProduct,
+      pointsEarned,
+      currentPoints: cust ? (cust.points || 0) : 0
+    };
+  }
+
+  addCustomerPoints(customerId, points) {
+    const cust = this.getCustomerById(customerId);
+    if (!cust) return 0;
+    cust.points = (cust.points || 0) + Number(points);
+    this.saveCustomer(cust);
+    return cust.points;
+  }
+
+  // Filter pesanan milik customer tertentu
+  getOrdersByCustomer(customerId) {
+    return this.getOrders().filter(o => o.customerId === customerId);
   }
 
   // --- Utilities ---

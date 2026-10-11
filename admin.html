@@ -69,10 +69,10 @@
           <span>Dasbor</span>
         </div>
 
-        <!-- 2. Pelanggan -->
+        <!-- 2. Pelanggan & Member -->
         <div class="admin-nav-item" data-view="pelanggan">
           <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 3s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
-          <span>Pelanggan</span>
+          <span>Pelanggan & Member</span>
         </div>
 
         <!-- 3. Produk -->
@@ -257,25 +257,138 @@
         <!-- ==========================================
              2. PELANGGAN
              ========================================== -->
+        <!-- ==========================================
+             2. PELANGGAN & MEMBER
+             ========================================== -->
         <section id="admin-view-pelanggan" class="admin-view">
           <div class="admin-card">
             <div class="admin-card-header">
-              <span class="admin-card-title">Data Petani & Pelanggan Terdaftar</span>
-              <div class="admin-card-actions">
-                <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddCustomerModal()">+ Tambah Data Petani</button>
+              <div>
+                <span class="admin-card-title">Data Petani & Manajemen Member</span>
+                <p style="font-size: 12px; color: #8BA498; margin-top: 3px;">
+                  Tingkat Member (Silver, Gold, Platinum) otomatis terhitung berdasarkan aktivitas transaksi dalam periode evaluasi.
+                </p>
+              </div>
+              <div class="admin-card-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn btn-secondary btn-sm" onclick="AdminApp.runPeriodicEvaluation()" title="Evaluasi ulang level semua member berdasarkan transaksi">
+                  🔄 Evaluasi Berkala Semua Member
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="AdminApp.toggleMemberSettingsCard()">
+                  ⚙️ Aturan Level & Benefit
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddCustomerModal()">
+                  + Tambah Data Petani
+                </button>
               </div>
             </div>
+
+            <!-- Member Settings Form Card (Bisa diubah fleksibel oleh Admin) -->
+            <div id="admin-member-settings-card" style="display: none; background: #04160E; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 18px; margin: 16px 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid rgba(16, 185, 129, 0.2); padding-bottom: 10px;">
+                <div>
+                  <h4 style="margin: 0; color: #34D399; font-size: 15px;">⚙️ Konfigurasi Aturan Level Member & Benefit</h4>
+                  <p style="margin: 4px 0 0 0; font-size: 12px; color: #8BA498;">
+                    Admin dapat mengubah persentase diskon, minimal transaksi, multiplier poin, dan produk bonus kapan saja.
+                  </p>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="AdminApp.toggleMemberSettingsCard()">Tutup</button>
+              </div>
+
+              <form onsubmit="AdminApp.saveMemberSettingsForm(event)">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px;">
+                  <!-- 1. Threshold Gold -->
+                  <div class="form-group">
+                    <label class="form-label">Minimal Belanja Level GOLD 🥇 (Rp):</label>
+                    <input type="number" id="setting-gold-min-spend" class="form-input" required>
+                    <span style="font-size: 11px; color: #5E7D6F;">Silver = Member Baru / s.d batas ini</span>
+                  </div>
+
+                  <!-- 2. Threshold Platinum -->
+                  <div class="form-group">
+                    <label class="form-label">Minimal Belanja Level PLATINUM 💎 (Rp):</label>
+                    <input type="number" id="setting-platinum-min-spend" class="form-input" required>
+                    <span style="font-size: 11px; color: #5E7D6F;">Mencapai akumulasi belanja lebih tinggi</span>
+                  </div>
+
+                  <!-- 3. Periode Evaluasi -->
+                  <div class="form-group">
+                    <label class="form-label">Periode Evaluasi Aktivitas (Hari):</label>
+                    <input type="number" id="setting-eval-days" class="form-input" min="7" max="365" required>
+                    <span style="font-size: 11px; color: #5E7D6F;">Contoh: 90 hari terakhir (3 bulan)</span>
+                  </div>
+
+                  <!-- 4. Diskon Gold -->
+                  <div class="form-group">
+                    <label class="form-label">Diskon Khusus Member GOLD (%):</label>
+                    <input type="number" id="setting-gold-disc" class="form-input" min="0" max="50" step="0.5" required>
+                    <span style="font-size: 11px; color: #5E7D6F;">Standar: 5% produk eligible</span>
+                  </div>
+
+                  <!-- 5. Diskon Platinum -->
+                  <div class="form-group">
+                    <label class="form-label">Diskon Khusus Member PLATINUM (%):</label>
+                    <input type="number" id="setting-platinum-disc" class="form-input" min="0" max="50" step="0.5" required>
+                    <span style="font-size: 11px; color: #5E7D6F;">Standar: 10% produk eligible</span>
+                  </div>
+
+                  <!-- 6. Max Discount Cap -->
+                  <div class="form-group">
+                    <label class="form-label">Maksimal Potongan Diskon (Cap Rp):</label>
+                    <input type="number" id="setting-max-disc-cap" class="form-input" required>
+                    <span style="font-size: 11px; color: #5E7D6F;">Mencegah sistem merugikan perusahaan</span>
+                  </div>
+
+                  <!-- 7. Multiplier Poin Silver -->
+                  <div class="form-group">
+                    <label class="form-label">Multiplier Poin SILVER (x):</label>
+                    <input type="number" id="setting-point-mult-silver" class="form-input" min="1" max="5" step="0.1" required>
+                  </div>
+
+                  <!-- 8. Multiplier Poin Gold -->
+                  <div class="form-group">
+                    <label class="form-label">Multiplier Poin GOLD (x):</label>
+                    <input type="number" id="setting-point-mult-gold" class="form-input" min="1" max="5" step="0.1" required>
+                  </div>
+
+                  <!-- 9. Multiplier Poin Platinum -->
+                  <div class="form-group">
+                    <label class="form-label">Multiplier Poin PLATINUM (x):</label>
+                    <input type="number" id="setting-point-mult-platinum" class="form-input" min="1" max="5" step="0.1" required>
+                  </div>
+
+                  <!-- 10. Syarat Min Belanja Free Product Platinum -->
+                  <div class="form-group">
+                    <label class="form-label">Min. Transaksi Bonus PLATINUM (Rp):</label>
+                    <input type="number" id="setting-free-min-spend" class="form-input" required>
+                    <span style="font-size: 11px; color: #5E7D6F;">Syarat agar bonus produk aktif (tidak tanpa batas)</span>
+                  </div>
+
+                  <!-- 11. Produk Bonus Terpilih -->
+                  <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Pilihan Produk Bonus Gratis PLATINUM (Ditentukan Admin):</label>
+                    <select id="setting-free-product-id" class="form-select" required></select>
+                    <span style="font-size: 11px; color: #5E7D6F;">Produk promo pilihan admin yang diberikan cuma-cuma (dibatasi 1 unit per transaksi)</span>
+                  </div>
+                </div>
+
+                <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 10px;">
+                  <button type="button" class="btn btn-secondary" onclick="AdminApp.resetMemberSettingsDefault()">Reset ke Default</button>
+                  <button type="submit" class="btn btn-primary">Simpan Pengaturan Member</button>
+                </div>
+              </form>
+            </div>
+
             <div class="table-responsive">
               <table class="admin-table">
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>Nama Petani / Kelompok Tani</th>
+                    <th>Nama Petani / Poktan</th>
+                    <th>Level Member</th>
+                    <th>Poin Belanja</th>
+                    <th>Total Transaksi</th>
+                    <th>Transaksi Periode (Evaluasi)</th>
                     <th>No. Telepon / WA</th>
-                    <th>Alamat Pengiriman Lahan</th>
-                    <th>Lahan & Komoditas</th>
-                    <th>Total Belanja</th>
-                    <th>Status</th>
                     <th>Aksi</th>
                   </tr>
                 </thead>
@@ -596,12 +709,24 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label">Harga Jual (Rp):</label>
+            <label class="form-label">Harga Jual Normal (Rp):</label>
             <input type="number" id="form-product-price" class="form-input">
           </div>
           <div class="form-group">
             <label class="form-label">Harga Asli Sebelum Coret (Opsional):</label>
             <input type="number" id="form-product-original-price" class="form-input">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: rgba(16, 185, 129, 0.05); padding: 10px; border-radius: 6px; border: 1px dashed rgba(16, 185, 129, 0.2); margin-bottom: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="color: #34D399;">Harga Khusus Member (Opsional Rp):</label>
+            <input type="number" id="form-product-member-price" class="form-input" placeholder="Harga spesial member Silver, Gold, Platinum">
+          </div>
+          <div class="form-group" style="margin-bottom: 0; display: flex; flex-direction: column; justify-content: center;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #ECFDF5; cursor: pointer; margin-top: 14px;">
+              <input type="checkbox" id="form-product-tier-eligible" checked style="width: 16px; height: 16px;">
+              <span>Berlaku Diskon Tambahan Gold & Platinum</span>
+            </label>
           </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
@@ -893,6 +1018,44 @@
     </div>
   </div>
 
+  <!-- Modal: Edit Member Tier & Poin -->
+  <div id="modal-edit-member" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Kelola Keanggotaan Member</h3>
+        <span class="modal-close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="edit-member-cust-id">
+        <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px; color: #ECFDF5;" id="edit-member-cust-name"></div>
+        <div style="font-size: 12px; color: #8BA498; margin-bottom: 14px;">Akumulasi Transaksi: <strong id="edit-member-total-spent" style="color: #34D399;"></strong></div>
+
+        <div class="form-group">
+          <label class="form-label">Tingkat Level Member:</label>
+          <select id="edit-member-tier-select" class="form-select">
+            <option value="silver">🥈 SILVER (Member Baru / Standar)</option>
+            <option value="gold">🥇 GOLD (Diskon Khusus & Poin Lebih Banyak)</option>
+            <option value="platinum">💎 PLATINUM (Diskon Tertinggi, Prioritas & Bonus Free Product)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Saldo Poin Belanja:</label>
+          <input type="number" id="edit-member-points-input" class="form-input" min="0">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Catatan Admin (Opsional):</label>
+          <textarea id="edit-member-notes" class="form-textarea" rows="2" placeholder="Alasan penyesuaian tier atau poin..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-modal-cancel">Batal</button>
+        <button class="btn btn-primary" onclick="AdminApp.saveEditMember()">Simpan Perubahan Member</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Surat Jalan & Invoice -->
   <div id="modal-invoice" class="modal-overlay">
     <div class="modal-box" style="max-width: 800px;">
@@ -901,9 +1064,14 @@
         <span class="modal-close">&times;</span>
       </div>
       <div class="modal-body" id="modal-invoice-content"></div>
-      <div class="modal-footer no-print">
-        <button class="btn btn-secondary btn-modal-cancel">Tutup</button>
-        <button class="btn btn-primary" onclick="window.print()">Cetak Dokumen Surat Jalan</button>
+      <div class="modal-footer no-print" style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn btn-primary" id="btn-admin-track-from-invoice" onclick="AdminApp.trackOrderFromInvoice()">
+          🚚 Lacak Pengiriman Kargo &rarr;
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary btn-modal-cancel">Tutup</button>
+          <button class="btn btn-outline-emerald" onclick="window.print()">Cetak Dokumen Surat Jalan</button>
+        </div>
       </div>
     </div>
   </div>
