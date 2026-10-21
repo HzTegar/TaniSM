@@ -1405,7 +1405,7 @@ const AdminApp = {
         <div class="print-document">
           <div class="report-header-kop">
             <div class="kop-left">
-              <h2>PT TANI SINERGI MANDIRI (Tani.SM)</h2>
+              <h2>PT TANI SEJATI MANDIRI (Tani.SM)</h2>
               <p>Sentra Logistik Pergudangan Pertanian & Saprotan Nasional<br>
               NPWP: 81.992.341.2-524.000 | Izin Usaha Perdagangan Kementan No. 2026/TANI-DIST/09<br>
               Alamat Gudang: Kawasan Agro Industri Delanggu, Klaten, Jawa Tengah | Email: logistik@tanism.id</p>
@@ -1490,7 +1490,7 @@ const AdminApp = {
         <div class="print-document">
           <div class="report-header-kop">
             <div class="kop-left">
-              <h2>PT TANI SINERGI MANDIRI (Tani.SM)</h2>
+              <h2>PT TANI SEJATI MANDIRI (Tani.SM)</h2>
               <p>Sentra Logistik Pergudangan Pertanian & Saprotan Nasional<br>
               Sistem Pengawasan Mutu & Inventaris Fisik Gudang</p>
             </div>
