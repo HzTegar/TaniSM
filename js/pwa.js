@@ -1,5 +1,5 @@
 /**
- * TANIHUB - PWA Registration & Install Controller (Desktop & Mobile)
+ * TaniSM - PWA Registration & Install Controller (Desktop & Mobile)
  * Handles Service Worker lifecycle, offline caching, beforeinstallprompt,
  * desktop installation, and iOS Add-to-Home-Screen guide.
  */
@@ -42,16 +42,13 @@
           // Ada service worker baru yang terpasang -> menunggu aktifasi.
           reg.addEventListener('updatefound', () => {
             const newWorker = reg.installing;
-            if (!newWorker) return;
-
-            newWorker.addEventListener('statechange', () => {
-              // 'installed' + sudah ada controller sebelumnya = ini UPDATE,
-              // bukan instalasi baru. Halaman akan di-reload otomatis oleh
-              // listener controllerchange di atas.
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('[PWA] Versi baru terpasang, memuat ulang halaman...');
-              }
-            });
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showToast('Versi baru TaniSM tersedia. Muat ulang halaman untuk memperbarui.', 'info');
+                }
+              });
+            }
           });
         })
         .catch((err) => {
@@ -78,11 +75,11 @@
   });
 
   window.addEventListener('appinstalled', () => {
-    console.log('[PWA] Aplikasi TANIHUB berhasil diinstal!');
+    console.log('[PWA] Aplikasi TaniSM berhasil diinstal!');
     deferredPrompt = null;
     hideInstallBanner();
     updateInstallButtons(false);
-    showToast('Aplikasi TANIHUB berhasil terpasang di perangkat Anda!', 'success');
+    showToast('Aplikasi TaniSM berhasil terpasang di perangkat Anda!', 'success');
   });
 
   // 3. Online/Offline Network Status
@@ -147,9 +144,9 @@
           to { transform: translateY(0); opacity: 1; }
         }
       </style>
-      <img src="icons/icon-192.png" alt="TANIHUB" style="width: 46px; height: 46px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3); flex-shrink: 0;">
+      <img src="icons/icon-192.png" alt="TaniSM" style="width: 46px; height: 46px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3); flex-shrink: 0;">
       <div style="flex: 1; min-width: 0;">
-        <div style="font-weight: 700; font-size: 13.5px; color: #FFFFFF; letter-spacing: 0.3px;">Pasang TANIHUB di Perangkat</div>
+        <div style="font-weight: 700; font-size: 13.5px; color: #FFFFFF; letter-spacing: 0.3px;">Pasang TaniSM di Perangkat</div>
         <div style="font-size: 11.5px; color: #8BA498; margin-top: 2px; line-height: 1.35;">Buka instan tanpa browser, bekerja offline, dan lebih ringan di Desktop & HP.</div>
       </div>
       <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
@@ -215,7 +212,7 @@
   // Global Trigger (callable from any button)
   window.triggerPwaInstall = function () {
     if (isStandalone) {
-      showToast('Aplikasi TANIHUB sudah terpasang dan aktif di perangkat Anda.', 'info');
+      showToast('Aplikasi TaniSM sudah terpasang dan aktif di perangkat Anda.', 'info');
       return;
     }
 
@@ -223,7 +220,7 @@
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then((choiceResult) => {
         if (choiceResult.outcome === 'accepted') {
-          console.log('[PWA] Pengguna menyetujui instalasi TANIHUB');
+          console.log('[PWA] Pengguna menyetujui instalasi TaniSM');
         }
         deferredPrompt = null;
         hideInstallBanner();
@@ -232,7 +229,7 @@
       showIosInstallModal();
     } else {
       // Desktop / Browser without prompt available yet
-      showToast('Untuk memasang di Desktop: Klik ikon "Install / Pasang" di bilah alamat (URL bar) browser Anda atau menu browser (⋮) > "Install TANIHUB".', 'info');
+      showToast('Untuk memasang di Desktop: Klik ikon "Install / Pasang" di bilah alamat (URL bar) browser Anda atau menu browser (⋮) > "Install TaniSM".', 'info');
     }
   };
 

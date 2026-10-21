@@ -1,6 +1,6 @@
 {
-  "name": "TANIHUB - Ekosistem Digital Pertanian",
-  "short_name": "TANIHUB",
+  "name": "TaniSM - Ekosistem Digital Pertanian",
+  "short_name": "TaniSM",
   "description": "Pasar sarana pertanian, benih, pupuk, alsintan & ekosistem digital terintegrasi.",
   "id": "./index.html",
   "start_url": "./index.html",
@@ -45,14 +45,14 @@
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "TANIHUB Dasbor Digital Pertanian (Desktop)"
+      "label": "TaniSM Dasbor Digital Pertanian (Desktop)"
     },
     {
       "src": "screenshots/mobile.png",
       "sizes": "540x960",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "TANIHUB Pasar Pertanian & Stok (Mobile)"
+      "label": "TaniSM Pasar Pertanian & Stok (Mobile)"
     }
   ],
   "shortcuts": [

@@ -1,11 +1,12 @@
 /**
- * TANIHUB Service Worker (PWA)
+ * TaniSM Service Worker (PWA)
  * Caches core static assets and provides offline functionality.
  */
 
 // Cache di-refresh setiap ada deploy. Naikkan nomor ini setiap kali
 // mengirim perubahan ke server agar browser darsebut dan memakai cache baru.
 const CACHE_NAME = 'tanihub-pwa-v4';
+const CACHE_NAME = 'tanism-pwa-v2';
 
 const STATIC_ASSETS = [
   './',
