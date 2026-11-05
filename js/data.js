@@ -16,6 +16,7 @@ const SEED_DATA = {
   products: [
     {
       id: 'PRD-001',
+      expiryDate: '2027-03-15',
       name: 'Benih Padi Unggul Ciherang Super (Label Biru Bersertifikat)',
       categoryId: 'cat-1',
       price: 95000,
@@ -39,6 +40,7 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-002',
+      expiryDate: '2026-11-20',
       name: 'Benih Cabai Rawit Hiyung Original Super Pedas',
       categoryId: 'cat-1',
       price: 38000,
