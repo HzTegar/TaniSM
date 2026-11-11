@@ -4,9 +4,8 @@
  */
 
 // Cache di-refresh setiap ada deploy. Naikkan nomor ini setiap kali
-// mengirim perubahan ke server agar browser darsebut dan memakai cache baru.
-const CACHE_NAME = 'tanihub-pwa-v4';
-const CACHE_NAME = 'tanism-pwa-v2';
+// mengirim perubahan ke server agar browser memakai cache baru.
+const CACHE_NAME = 'tanism-pwa-v3';
 
 const STATIC_ASSETS = [
   './',

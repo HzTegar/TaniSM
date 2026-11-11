@@ -17,6 +17,8 @@ const SEED_DATA = {
     {
       id: 'PRD-001',
       expiryDate: '2027-03-15',
+      code: 'PRD-001',
+      stockCard: { totalMasuk: 850, totalKeluar: 400, saldoAkhir: 450 },
       name: 'Benih Padi Unggul Ciherang Super (Label Biru Bersertifikat)',
       categoryId: 'cat-1',
       price: 95000,
@@ -41,8 +43,12 @@ const SEED_DATA = {
     {
       id: 'PRD-002',
       expiryDate: '2026-11-20',
+      code: 'PRD-002',
+      stockCard: { totalMasuk: 500, totalKeluar: 180, saldoAkhir: 320 },
       name: 'Benih Cabai Rawit Hiyung Original Super Pedas',
       categoryId: 'cat-1',
+      categoryName: 'Bibit & Benih',
+      category: 'Bibit & Benih',
       price: 38000,
       originalPrice: 48000,
       stock: 320,
@@ -62,6 +68,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-003',
+      expiryDate: '2027-06-30',
+      code: 'PRD-003',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Pupuk NPK Mutiara 16-16-16 Granul Biru Original YaraMila',
       categoryId: 'cat-2',
       price: 185000,
@@ -85,6 +94,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-004',
+      expiryDate: '2027-01-15',
+      code: 'PRD-004',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Pupuk Hayati Cair EM4 Pertanian Kemasan Segel Pabrik 1 Liter',
       categoryId: 'cat-2',
       price: 26500,
@@ -106,6 +118,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-005',
+      expiryDate: '2028-05-01',
+      code: 'PRD-005',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Sprayer Elektrik Tanika 16 Liter Aki Kering Dual Fungsi Manual',
       categoryId: 'cat-4',
       price: 485000,
@@ -127,6 +142,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-006',
+      expiryDate: '2026-10-20',
+      code: 'PRD-006',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Fungisida Kontak Antracol 70 WP Bayer Protektif Daun & Buah',
       categoryId: 'cat-3',
       price: 64000,
@@ -148,6 +166,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-007',
+      expiryDate: '2027-02-28',
+      code: 'PRD-007',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Benih Jagung Hibrida NK 212 Raja Panen Tahan Kekeringan',
       categoryId: 'cat-1',
       price: 135000,
@@ -169,6 +190,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-008',
+      expiryDate: '2026-12-31',
+      code: 'PRD-008',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Insektisida Biologis Ekstrak Mimba (Neem Oil) Pengusir Kutu Kebul',
       categoryId: 'cat-3',
       price: 49000,
@@ -190,6 +214,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-009',
+      expiryDate: '2028-01-10',
+      code: 'PRD-009',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Plastik Mulsa Hitam Perak (MHP) Lebar 120 cm Panjang 500 Meter',
       categoryId: 'cat-5',
       price: 365000,
@@ -211,6 +238,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-010',
+      expiryDate: '2028-03-15',
+      code: 'PRD-010',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Gunting Dahan & Ranting Pruning Baja SK-5 Super Tajam Ergonomis',
       categoryId: 'cat-4',
       price: 52000,
@@ -232,6 +262,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-011',
+      expiryDate: '2027-04-01',
+      code: 'PRD-011',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Pupuk Kascing Organik Murni 100% Cacing Tanah Fermentasi Matang',
       categoryId: 'cat-2',
       price: 22000,
@@ -253,6 +286,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-012',
+      expiryDate: '2028-06-01',
+      code: 'PRD-012',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Tray Semai Bibit 128 Lubang Tebal Awet Tidak Mudah Pecah',
       categoryId: 'cat-5',
       price: 8500,
@@ -274,6 +310,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-013',
+      expiryDate: '2026-09-30',
+      code: 'PRD-013',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Bawang Merah Asli Brebes Varietas Bima Brebes Kualitas Super',
       categoryId: 'cat-6',
       price: 34000,
@@ -295,6 +334,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-014',
+      expiryDate: '2026-11-05',
+      code: 'PRD-014',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Melon Golden Aroma Hidroponik Grade A Manis Renyah Brix 14+',
       categoryId: 'cat-6',
       price: 28000,
@@ -316,6 +358,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-015',
+      expiryDate: '2028-02-01',
+      code: 'PRD-015',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Cangkul Baja Tempa Pandai Besi Tradisional Anti Lengket Tanah',
       categoryId: 'cat-4',
       price: 88000,
@@ -337,6 +382,9 @@ const SEED_DATA = {
     },
     {
       id: 'PRD-016',
+      expiryDate: '2027-03-01',
+      code: 'PRD-016',
+      stockCard: { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 },
       name: 'Benih Tomat Servo F1 Tahan Virus Gemini & Layu Bakteri',
       categoryId: 'cat-1',
       price: 89000,
@@ -672,6 +720,61 @@ const SEED_DATA = {
     { id: 'LOG-003', date: '2026-10-01 10:00', productId: 'PRD-003', productName: 'Pupuk NPK Mutiara 16-16-16', type: 'Masuk', qty: 300, balance: 620, note: 'Kedatangan truk kontainer distributor Yara' },
     { id: 'LOG-004', date: '2026-10-01 11:35', productId: 'PRD-005', productName: 'Sprayer Elektrik Tanika 16L', type: 'Keluar', qty: 2, balance: 45, note: 'Alokasi pesanan ORD-20261001-002' },
     { id: 'LOG-005', date: '2026-10-02 16:00', productId: 'PRD-009', productName: 'Plastik Mulsa Hitam Perak', type: 'Penyesuaian', qty: -1, balance: 35, note: 'Stock opname akhir pekan: 1 roll dipakai uji ketebalan lab' }
+  ],
+
+  barangMasuk: [
+    { id: 'BM-20261001-001', tanggalDatang: '2026-10-01 08:30', kodeBarang: 'PRD-001', namaBarang: 'Benih Padi Unggul Ciherang', jumlahMasuk: 200, satuan: 'Karung 5 Kg', hargaSatuan: 82000, supplier: 'PT Sang Hyang Seri' },
+    { id: 'BM-20261001-002', tanggalDatang: '2026-10-01 10:00', kodeBarang: 'PRD-003', namaBarang: 'Pupuk NPK Mutiara 16-16-16', jumlahMasuk: 300, satuan: 'Zak 5 Kg', hargaSatuan: 165000, supplier: 'PT Petrokimia Gresik' }
+  ],
+
+  barangKeluar: [
+    { id: 'BK-20261001-001', tanggalKeluar: '2026-10-01 14:00', kodeBarang: 'PRD-005', namaBarang: 'Sprayer Elektrik Tanika 16L', jumlahKeluar: 2, satuan: 'Unit', harga: 485000, catatan: 'Alokasi pesanan ORD-20261001-002' },
+    { id: 'BK-20261002-001', tanggalKeluar: '2026-10-02 15:10', kodeBarang: 'PRD-004', namaBarang: 'Pupuk Hayati EM4 1L', jumlahKeluar: 2, satuan: 'Botol', harga: 26500, catatan: 'Alokasi pesanan ORD-20261002-003' }
+  ],
+
+  purchaseOrders: [
+    {
+      id: 'PO-20261101-001',
+      tanggalPembuatan: '2026-11-01',
+      supplier: 'PT Petrokimia Gresik',
+      alamatSupplier: 'Jl. Raya Kawasan Industri Gresik, Jawa Timur',
+      teleponSupplier: '031-3986368',
+      tanggalKirimDirencanakan: '2026-11-10',
+      status: 'Menunggu Persetujuan',
+      items: [
+        { kodeBarang: 'PRD-003', namaBarang: 'Pupuk NPK Mutiara 16-16-16', kategori: 'Pupuk', jumlah: 100, satuan: 'Zak', hargaSatuan: 165000, subtotal: 16500000 }
+      ],
+      ringkasan: { totalJumlah: 100, totalHarga: 16500000, diskon: 0, pajak: 0, biayaKirim: 250000, totalKeseluruhan: 16750000 }
+    },
+    {
+      id: 'PO-20261015-001',
+      tanggalPembuatan: '2026-10-15',
+      supplier: 'PT Sang Hyang Seri',
+      alamatSupplier: 'Jl. Raya Cikampek, Karawang, Jawa Barat',
+      teleponSupplier: '0264-325042',
+      tanggalKirimDirencanakan: '2026-10-25',
+      status: 'Selesai',
+      items: [
+        { kodeBarang: 'PRD-001', namaBarang: 'Benih Padi Ciherang Super', kategori: 'Benih', jumlah: 200, satuan: 'Karung', hargaSatuan: 82000, subtotal: 16400000 }
+      ],
+      ringkasan: { totalJumlah: 200, totalHarga: 16400000, diskon: 200000, pajak: 0, biayaKirim: 300000, totalKeseluruhan: 16500000 }
+    }
+  ],
+
+  stockOpnames: [
+    {
+      id: 'OP-20261101-001',
+      tanggalPemeriksaan: '2026-11-01',
+      petugas: 'Wahyu Triadi',
+      lokasi: 'Gudang Pusat - Rak A/B',
+      keterangan: 'Stock opname bulanan November 2026',
+      status: 'Menunggu Persetujuan',
+      items: [
+        { kodeBarang: 'PRD-003', namaBarang: 'Pupuk NPK Mutiara 16-16-16', stokSistem: 620, stokFisik: 615, selisih: -5 },
+        { kodeBarang: 'PRD-007', namaBarang: 'Benih Jagung NK 212', stokSistem: 280, stokFisik: 280, selisih: 0 },
+        { kodeBarang: 'PRD-006', namaBarang: 'Fungisida Antracol 70 WP', stokSistem: 190, stokFisik: 192, selisih: 2 }
+      ]
+    }
   ],
 
   warehouseBanners: [

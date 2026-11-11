@@ -745,6 +745,7 @@ const CustomerApp = {
             ${isBonusProduct ? `<span class="badge badge-blue">🎁 Bonus Gratis Platinum (Min. Rp500rb)</span>` : ''}
             <span style="font-size:12px; color:#4B5563;">Gudang: <strong>${product.location}</strong></span>
           </div>
+          ${window.taniStore.isProductExpired(product) ? `<div style="margin-bottom:10px; padding:10px 12px; background:#FEF2F2; border:1px solid #EF4444; border-radius:6px; color:#991B1B; font-size:13px; font-weight:700;">⛔ Barang sudah kedaluwarsa pada ${product.expiryDate || ''} — diblokir sistem dan tidak dapat dibeli.</div>` : ''}
 
           <h2 class="detail-title">${product.name}</h2>
 
@@ -820,12 +821,13 @@ const CustomerApp = {
           </div>
 
           <div class="detail-actions">
+            ${window.taniStore.isProductExpired(product) ? `<button class="btn btn-secondary btn-lg" disabled style="opacity:0.5; cursor:not-allowed;">KEDALUWARSA — DIBLOKIR</button>` : `
             <button class="btn btn-outline-orange btn-lg" onclick="CustomerApp.addToCartFromDetail('${product.id}', false)">
               Masukkan Keranjang
             </button>
             <button class="btn btn-primary btn-lg" onclick="CustomerApp.addToCartFromDetail('${product.id}', true)">
               Beli Sekarang
-            </button>
+            </button>`}
           </div>
 
           <!-- Product Reviews Section inside Detail -->
@@ -864,6 +866,11 @@ const CustomerApp = {
   },
 
   addToCartFromDetail(productId, directCheckout = false) {
+    const product = window.taniStore.getProductById(productId);
+    if (product && window.taniStore.isProductExpired(product)) {
+      TaniAuth.showToast('Barang sudah kedaluwarsa — diblokir sistem dan tidak dapat dibeli', 'error');
+      return;
+    }
     const input = document.getElementById('detail-qty-input');
     const qty = input ? parseInt(input.value) || 1 : 1;
 

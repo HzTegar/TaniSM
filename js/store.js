@@ -17,7 +17,11 @@ class TaniStore {
       CART: 'tanism_cart',
       WISHLIST: 'tanism_wishlist',
       AUTH: 'tanism_auth_session',
-      MEMBER_SETTINGS: 'tanism_member_settings'
+      MEMBER_SETTINGS: 'tanism_member_settings',
+      BARANG_MASUK: 'tanism_barang_masuk',
+      BARANG_KELUAR: 'tanism_barang_keluar',
+      PURCHASE_ORDERS: 'tanism_purchase_orders',
+      STOCK_OPNAMES: 'tanism_stock_opnames'
     };
 
     // Cache in-memory: menghindari JSON.parse localStorage berulang di setiap render.
@@ -108,6 +112,10 @@ class TaniStore {
     this.seedIfMissing(this.STORAGE_KEYS.BANNERS, SEED_DATA.warehouseBanners);
     this.seedIfMissing(this.STORAGE_KEYS.CART, []);
     this.seedIfMissing(this.STORAGE_KEYS.WISHLIST, []);
+    this.seedIfMissing(this.STORAGE_KEYS.BARANG_MASUK, SEED_DATA.barangMasuk || []);
+    this.seedIfMissing(this.STORAGE_KEYS.BARANG_KELUAR, SEED_DATA.barangKeluar || []);
+    this.seedIfMissing(this.STORAGE_KEYS.PURCHASE_ORDERS, SEED_DATA.purchaseOrders || []);
+    this.seedIfMissing(this.STORAGE_KEYS.STOCK_OPNAMES, SEED_DATA.stockOpnames || []);
 
     if (localStorage.getItem(this.STORAGE_KEYS.AUTH) === null) {
       // Default initial session: Customer
@@ -126,6 +134,7 @@ class TaniStore {
     }
 
     this.ensureCustomerMembershipData();
+    this.migrateProducts();
   }
 
   ensureCustomerMembershipData() {
@@ -196,6 +205,99 @@ class TaniStore {
     this.removeKey(this.STORAGE_KEYS.AUTH);
   }
 
+  // --- Expiry helpers (sistem otomatis memblokir barang kedaluwarsa) ---
+  isProductExpired(product, now = new Date()) {
+    if (!product || !product.expiryDate) return false;
+    const exp = new Date(product.expiryDate + 'T23:59:59');
+    return !isNaN(exp.getTime()) && exp < now;
+  }
+  daysUntilExpiry(product, now = new Date()) {
+    if (!product || !product.expiryDate) return null;
+    const exp = new Date(product.expiryDate + 'T00:00:00');
+    if (isNaN(exp.getTime())) return null;
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((exp - today) / (1000 * 60 * 60 * 24));
+  }
+  // Status stok berdasarkan stok aktual vs minStockWarning (untuk tabel + grafik: Aman/Menipis/Habis)
+  getStockStatusKey(product, now = new Date()) {
+    if (this.isProductExpired(product, now)) return 'expired';
+    const stock = Number(product.stock) || 0;
+    const min = Number(product.minStockWarning) || 20;
+    if (stock <= 0) return 'empty';
+    if (stock <= min) return 'low';
+    return 'safe';
+  }
+  getProductStatus(product, now = new Date()) {
+    if (this.isProductExpired(product, now)) return { key: 'expired', label: 'Habis', badgeClass: 'stock-badge-empty' };
+    if ((product.stock || 0) === 0) return { key: 'empty', label: 'Habis', badgeClass: 'stock-badge-empty' };
+    if ((product.stock || 0) <= (product.minStockWarning || 20)) return { key: 'low', label: 'Menipis', badgeClass: 'stock-badge-low' };
+    const d = this.daysUntilExpiry(product, now);
+    if (d !== null && d <= 30) return { key: 'nearing', label: 'Menipis', badgeClass: 'stock-badge-low' };
+    return { key: 'safe', label: 'Aman', badgeClass: 'stock-badge-safe' };
+  }
+  getExpiredProducts() {
+    return this.getProducts().filter(p => this.isProductExpired(p));
+  }
+  getLowStockProducts() {
+    return this.getProducts().filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= (p.minStockWarning || 20));
+  }
+  getStockCard(productId) {
+    const p = this.getProductById(productId);
+    if (!p) return { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 };
+    if (p.stockCard) return { ...p.stockCard, saldoAkhir: Number(p.stock) || 0 };
+    const logs = this.getStockLogs().filter(l => l.productId === productId);
+    let masuk = 0, keluar = 0;
+    logs.forEach(l => {
+      if (l.type === 'Masuk') masuk += Math.abs(Number(l.qty) || 0);
+      else if (l.type === 'Keluar') keluar += Math.abs(Number(l.qty) || 0);
+    });
+    return { totalMasuk: masuk, totalKeluar: keluar, saldoAkhir: Number(p.stock) || 0 };
+  }
+
+  migrateProducts() {
+    const prods = this.getProducts();
+    const cats = this.getCategories ? this.getCategories() : [];
+    let changed = false;
+    const MASTER = {
+      'cat-1': 'Bibit & Benih', 'cat-2': 'Pupuk Tanaman', 'cat-3': 'Obat Hama & Penyakit',
+      'cat-4': 'Alat & Mesin Tani', 'cat-5': 'Media & Perlengkapan', 'cat-6': 'Hasil Panen Segar'
+    };
+    const norm = (n) => {
+      if (!n) return null;
+      const low = String(n).trim().toLowerCase();
+      const aliases = {
+        'benih': MASTER['cat-1'], 'bibit': MASTER['cat-1'], 'bibit & benih': MASTER['cat-1'],
+        'pupuk': MASTER['cat-2'], 'pupuk tanaman': MASTER['cat-2'],
+        'obat': MASTER['cat-3'], 'obat hama': MASTER['cat-3'], 'pestisida': MASTER['cat-3'],
+        'alat': MASTER['cat-4'], 'alat & mesin': MASTER['cat-4'], 'alat & mesin tani': MASTER['cat-4'], 'mesin tani': MASTER['cat-4'],
+        'media': MASTER['cat-5'], 'media & perlengkapan': MASTER['cat-5'], 'perlengkapan': MASTER['cat-5'],
+        'hasil panen': MASTER['cat-6'], 'hasil panen segar': MASTER['cat-6']
+      };
+      if (aliases[low]) return aliases[low];
+      const ex = Object.values(MASTER).find(m => m.toLowerCase() === low);
+      return ex || null;
+    };
+    prods.forEach(p => {
+      if (!p.code) { p.code = p.id; changed = true; }
+      if (!p.stockCard) { p.stockCard = { totalMasuk: 0, totalKeluar: 0, saldoAkhir: Number(p.stock) || 0 }; changed = true; }
+      else if (p.stockCard.saldoAkhir !== (Number(p.stock) || 0)) { p.stockCard.saldoAkhir = Number(p.stock) || 0; changed = true; }
+      if (!p.expiryDate) { p.expiryDate = '2028-12-31'; changed = true; }
+      // Kategori WAJIB 6 master — normalisasi dari categoryId/name lama.
+      const byId = cats.find(x => x.id === p.categoryId);
+      const byName = p.categoryName || p.category;
+      let canonical = norm((byId && byId.name) || byName) || norm(p.categoryId) || MASTER[p.categoryId] || null;
+      if (!canonical) {
+        // fallback dari nama kategori di master bila ada
+        canonical = byId ? byId.name : 'Bibit & Benih';
+      }
+      const canonicalId = Object.keys(MASTER).find(id => MASTER[id] === canonical) || p.categoryId || 'cat-1';
+      if (p.categoryName !== canonical || p.category !== canonical || p.categoryId !== canonicalId) {
+        p.categoryName = canonical; p.category = canonical; p.categoryId = canonicalId; changed = true;
+      }
+    });
+    if (changed) this.writeKey(this.STORAGE_KEYS.PRODUCTS, prods);
+  }
+
   // --- Products ---
   getProducts() {
     return this.readKey(this.STORAGE_KEYS.PRODUCTS, []);
@@ -235,7 +337,15 @@ class TaniStore {
     const p = products.find(prod => prod.id === productId);
     if (!p) return false;
 
+    if (deltaQty < 0 && this.isProductExpired(p)) {
+      return false;
+    }
+
     p.stock = Math.max(0, p.stock + deltaQty);
+    if (!p.stockCard) p.stockCard = { totalMasuk: 0, totalKeluar: 0, saldoAkhir: 0 };
+    if (type === 'Masuk') p.stockCard.totalMasuk += Math.abs(deltaQty);
+    else if (type === 'Keluar') p.stockCard.totalKeluar += Math.abs(deltaQty);
+    p.stockCard.saldoAkhir = p.stock;
     this.writeKey(this.STORAGE_KEYS.PRODUCTS, products);
 
     // Log the change
@@ -429,6 +539,8 @@ class TaniStore {
     const cart = this.getCart();
     const product = this.getProductById(productId);
     if (!product) return cart;
+    // BLOKIR barang kedaluwarsa
+    if (this.isProductExpired(product)) return cart;
 
     const existing = cart.find(item => item.productId === productId);
     if (existing) {
@@ -765,6 +877,60 @@ class TaniStore {
   // Filter pesanan milik customer tertentu
   getOrdersByCustomer(customerId) {
     return this.getOrders().filter(o => o.customerId === customerId);
+  }
+
+  // --- Barang Masuk ---
+  getBarangMasuk() { return this.readKey(this.STORAGE_KEYS.BARANG_MASUK, []); }
+  saveBarangMasuk(entry) {
+    const list = this.getBarangMasuk();
+    const idx = list.findIndex(e => e.id === entry.id);
+    if (idx >= 0) list[idx] = entry; else list.unshift(entry);
+    this.writeKey(this.STORAGE_KEYS.BARANG_MASUK, list);
+    return entry;
+  }
+  deleteBarangMasuk(id) {
+    this.writeKey(this.STORAGE_KEYS.BARANG_MASUK, this.getBarangMasuk().filter(e => e.id !== id));
+  }
+
+  // --- Barang Keluar ---
+  getBarangKeluar() { return this.readKey(this.STORAGE_KEYS.BARANG_KELUAR, []); }
+  saveBarangKeluar(entry) {
+    const list = this.getBarangKeluar();
+    const idx = list.findIndex(e => e.id === entry.id);
+    if (idx >= 0) list[idx] = entry; else list.unshift(entry);
+    this.writeKey(this.STORAGE_KEYS.BARANG_KELUAR, list);
+    return entry;
+  }
+  deleteBarangKeluar(id) {
+    this.writeKey(this.STORAGE_KEYS.BARANG_KELUAR, this.getBarangKeluar().filter(e => e.id !== id));
+  }
+
+  // --- Purchase Order ---
+  getPurchaseOrders() { return this.readKey(this.STORAGE_KEYS.PURCHASE_ORDERS, []); }
+  getPurchaseOrderById(id) { return this.getPurchaseOrders().find(p => p.id === id) || null; }
+  savePurchaseOrder(po) {
+    const list = this.getPurchaseOrders();
+    const idx = list.findIndex(p => p.id === po.id);
+    if (idx >= 0) list[idx] = po; else list.unshift(po);
+    this.writeKey(this.STORAGE_KEYS.PURCHASE_ORDERS, list);
+    return po;
+  }
+  deletePurchaseOrder(id) {
+    this.writeKey(this.STORAGE_KEYS.PURCHASE_ORDERS, this.getPurchaseOrders().filter(p => p.id !== id));
+  }
+
+  // --- Stock Opname ---
+  getStockOpnames() { return this.readKey(this.STORAGE_KEYS.STOCK_OPNAMES, []); }
+  getStockOpnameById(id) { return this.getStockOpnames().find(o => o.id === id) || null; }
+  saveStockOpname(op) {
+    const list = this.getStockOpnames();
+    const idx = list.findIndex(o => o.id === op.id);
+    if (idx >= 0) list[idx] = op; else list.unshift(op);
+    this.writeKey(this.STORAGE_KEYS.STOCK_OPNAMES, list);
+    return op;
+  }
+  deleteStockOpname(id) {
+    this.writeKey(this.STORAGE_KEYS.STOCK_OPNAMES, this.getStockOpnames().filter(o => o.id !== id));
   }
 
   // --- Utilities ---

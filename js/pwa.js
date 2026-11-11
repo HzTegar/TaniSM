@@ -32,6 +32,88 @@
   // Untuk menguji perilaku install sungguhan, buka lewat HTTPS / domain asli.
   const isLocalDev = ['localhost', '127.0.0.1', '::1', ''].includes(location.hostname);
 
+  function applyUpdate(reg) {
+    const waitingWorker = reg.waiting || reg.installing;
+    if (waitingWorker) {
+      waitingWorker.postMessage({ action: 'skipWaiting' });
+      return;
+    }
+    // Fallback: trigger skipWaiting via registration
+    if (reg.waiting) {
+      reg.waiting.postMessage({ action: 'skipWaiting' });
+    }
+  }
+
+  function showUpdatePrompt(reg) {
+    // Hindari duplikasi prompt
+    if (document.getElementById('pwa-update-banner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'pwa-update-banner';
+    banner.className = 'no-print';
+    banner.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10000;
+      background: linear-gradient(135deg, rgba(6, 33, 21, 0.98), rgba(3, 16, 10, 0.98));
+      border: 1px solid rgba(16, 185, 129, 0.55);
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.85), 0 0 28px rgba(16, 185, 129, 0.28);
+      backdrop-filter: blur(16px);
+      max-width: calc(100vw - 32px);
+      font-family: inherit;
+      animation: pwaUpdateSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    `;
+
+    banner.innerHTML = `
+      <style>
+        @keyframes pwaUpdateSlideUp {
+          from { transform: translateX(-50%) translateY(60px); opacity: 0; }
+          to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+      </style>
+      <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+          <path d="M12 16V4M12 4L6 10M12 4L18 10M4 20H20" stroke="#10B981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div style="min-width:0;">
+          <div style="font-weight: 800; font-size: 13px; color: #FFFFFF;">Versi baru TaniSM tersedia</div>
+          <div style="font-size: 11.5px; color: #8BA498; margin-top: 1px;">Perbarui untuk mendapatkan perbaikan & fitur terbaru.</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+        <button id="pwa-update-later" style="background: transparent; border: 1px solid rgba(139, 164, 152, 0.5); color: #A7F3D0; border-radius: 9px; font-weight: 700; font-size: 12px; padding: 7px 10px; cursor: pointer;">Nanti</button>
+        <button id="pwa-update-now" style="background: #10B981; color: #04160E; border: none; border-radius: 9px; font-weight: 900; font-size: 12px; padding: 7px 12px; cursor: pointer; box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);">Perbarui Sekarang</button>
+      </div>
+    `;
+
+    document.body.appendChild(banner);
+
+    document.getElementById('pwa-update-now').addEventListener('click', () => {
+      banner.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px; padding: 4px 6px;">
+          <div style="width:16px; height:16px; border:2px solid rgba(16,185,129,0.4); border-top-color:#10B981; border-radius:50%; animation: pwaSpin 0.8s linear infinite;"></div>
+          <div style="font-weight:700; font-size:12.5px; color:#ECFDF5;">Memperbarui...</div>
+        </div>
+        <style>@keyframes pwaSpin { to { transform: rotate(360deg); } }</style>
+      `;
+      applyUpdate(reg);
+    });
+
+    document.getElementById('pwa-update-later').addEventListener('click', () => {
+      banner.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateX(-50%) translateY(30px)';
+      setTimeout(() => banner.remove(), 260);
+    });
+  }
+
   if ('serviceWorker' in navigator && !isLocalDev) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
@@ -39,17 +121,28 @@
         .then((reg) => {
           console.log('[PWA] Service Worker terdaftar dengan scope:', reg.scope);
 
+          // Jika ada SW yang menunggu (mis. update terdeteksi sebelum reload)
+          if (reg.waiting && navigator.serviceWorker.controller) {
+            showUpdatePrompt(reg);
+          }
+
           // Ada service worker baru yang terpasang -> menunggu aktifasi.
           reg.addEventListener('updatefound', () => {
             const newWorker = reg.installing;
             if (newWorker) {
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  showToast('Versi baru TaniSM tersedia. Muat ulang halaman untuk memperbarui.', 'info');
+                  showUpdatePrompt(reg);
                 }
+                // Jika tidak ada controller (first install), biarkan flow normal tanpa prompt paksa
               });
             }
           });
+
+          // Cek update secara berkala saat tab tetap terbuka
+          setInterval(() => {
+            reg.update().catch(() => {});
+          }, 60 * 60 * 1000);
         })
         .catch((err) => {
           console.warn('[PWA] Pendaftaran Service Worker gagal:', err);

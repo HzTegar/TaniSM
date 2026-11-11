@@ -57,10 +57,10 @@
 
       <!-- Navigation Menu Items (Urutan Persis Sesuai Screenshot) -->
       <nav class="admin-nav">
-        <!-- 1. Dasbor -->
+        <!-- 1. Dashboard -->
         <div class="admin-nav-item active" data-view="dasbor">
           <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
-          <span>Dasbor</span>
+          <span>Dashboard</span>
         </div>
 
         <!-- 2. Pelanggan & Member -->
@@ -69,52 +69,39 @@
           <span>Pelanggan & Member</span>
         </div>
 
-        <!-- 3. Produk -->
+        <!-- 3. Manajemen Produk -->
         <div class="admin-nav-item" data-view="produk">
           <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4 8 4 8-4zm-8 6l-7-3.5V17l7 3.5 7-3.5V9.5L12 13z"/></svg>
-          <span>Produk</span>
+          <span>Manajemen Produk</span>
         </div>
 
-        <!-- 4. Kategori -->
-        <div class="admin-nav-item" data-view="kategori">
-          <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
-          <span>Kategori</span>
+        <div class="admin-nav-item" data-view="barangmasuk">
+          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          <span>Barang Masuk</span>
         </div>
 
-        <!-- 5. Stok -->
-        <div class="admin-nav-item" data-view="stok">
-          <svg viewBox="0 0 24 24"><path d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
-          <span>Stok</span>
+        <div class="admin-nav-item" data-view="barangkeluar">
+          <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z"/></svg>
+          <span>Barang Keluar</span>
         </div>
 
-        <!-- 6. Pemesanan -->
-        <div class="admin-nav-item" data-view="pemesanan">
+        <!-- Stock Control (Gabungan Purchase Order & Stock Opname — 1 fitur, 2 tab) -->
+        <div class="admin-nav-item" data-view="stockcontrol">
+          <svg viewBox="0 0 24 24"><path d="M12 2.5l1.7 3.4 3.8.6-2.8 2.7.7 3.8L12 11.3 8.6 13l.7-3.8L6.5 6.5l3.8-.6L12 2.5zM19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 16H7v-2h10v2zm0-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+          <span>Stock Control</span>
+        </div>
+
+        <!-- 6. Manajemen Penjualan: Pemesanan, Pembayaran & Pengiriman digabung -->
+        <div class="admin-nav-item" data-view="penjualan">
           <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
-          <span>Pemesanan</span>
+          <span>Manajemen Penjualan</span>
         </div>
 
-        <!-- 7. Pembayaran -->
-        <div class="admin-nav-item" data-view="pembayaran">
-          <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
-          <span>Pembayaran</span>
-        </div>
-
-        <!-- 8. Pengiriman -->
-        <div class="admin-nav-item" data-view="pengiriman">
-          <svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-          <span>Pengiriman</span>
-        </div>
-
-        <!-- 9. Konten -->
-        <div class="admin-nav-item" data-view="konten">
-          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-          <span>Konten</span>
-        </div>
-
-        <!-- 10. Promo -->
-        <div class="admin-nav-item" data-view="promo">
-          <svg viewBox="0 0 24 24"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/></svg>
-          <span>Promo</span>
+        <!-- 9. Promosi & Edukasi (Gabungan Konten & Diskon/Kupon)
+             1 menu tab yang berisi tab Promosi/Kupon dan Edukasi -->
+        <div class="admin-nav-item" data-view="promoedu">
+          <svg viewBox="0 0 24 24"><path d="M12 2.5l1.7 3.4 3.8.6-2.8 2.7.7 3.8L12 11.3 8.6 13l.7-3.8L6.5 6.5l3.8-.6L12 2.5zM19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 16H7v-2h10v2zm0-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+          <span>Promosi &amp; Edukasi</span>
         </div>
 
         <!-- 11. Laporan -->
@@ -223,10 +210,57 @@
               <div class="metric-tag">Total Penjualan</div>
             </div>
           </div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px; font-size:12px;"><span id="dash-kpi-expired-count" style="color:#F87171;"></span><span id="dash-kpi-lowstock-count" style="color:#FDE047;"></span></div>
 
-          <!-- 2 Col Activity Row (Produk Terbaru & Pesanan Terbaru) -->
+          <div style="background:#082619; border:1px solid #10B981; border-radius:12px; padding:16px; margin-bottom:16px;">
+            <div style="font-weight:700; color:#34D399; margin-bottom:6px;">Total Penjualan</div>
+            <div style="font-size:22px; font-weight:800; color:#ECFDF5;" id="dash-kpi-sales-qty">0 unit</div>
+            <div style="font-size:11px; color:#8BA498; margin-top:4px;">Dari total pesanan tercatat</div>
+          </div>
+
+          <div class="dash-chart-grid">
+            <div class="dash-chart-card dash-chart-card--wide">
+              <h3>Grafik Stok Produk</h3>
+              <div id="dash-chart-stok-produk" class="dash-chart-body" style="color:#8BA498; font-size:12px;">Memuat grafik...</div>
+            </div>
+            <div class="dash-chart-card dash-chart-card--wide">
+              <div class="dash-chart-head">
+                <h3>Grafik Barang Masuk dan Keluar</h3>
+                <label class="dash-period-label" for="dash-period-select">Periode:
+                  <select id="dash-period-select" class="form-select dash-period-select" onchange="AdminApp.setDashboardPeriod(this.value)">
+                    <option value="harian">Harian</option>
+                    <option value="mingguan">Mingguan</option>
+                    <option value="bulanan" selected>Bulanan</option>
+                  </select>
+                </label>
+              </div>
+              <div class="dash-kpi-chips">
+                <span class="dash-kpi-chip dash-kpi-chip--masuk">Masuk: <strong id="dash-total-masuk">0</strong></span>
+                <span class="dash-kpi-chip dash-kpi-chip--keluar">Keluar: <strong id="dash-total-keluar">0</strong></span>
+              </div>
+              <div id="dash-chart-masuk-keluar" class="dash-chart-body" style="color:#8BA498; font-size:12px;">Memuat grafik...</div>
+            </div>
+            <div class="dash-chart-card">
+              <h3>Grafik Status Stok</h3>
+              <div id="dash-chart-status-stok" class="dash-chart-body" style="color:#8BA498; font-size:12px;">Memuat grafik...</div>
+            </div>
+            <div class="dash-chart-card">
+              <h3>Grafik Kategori Produk</h3>
+              <div id="dash-chart-kategori" class="dash-chart-body" style="color:#8BA498; font-size:12px;">Memuat grafik...</div>
+            </div>
+            <div class="dash-chart-card dash-chart-card--wide">
+              <h3>Grafik Tren Persediaan</h3>
+              <div id="dash-chart-tren" class="dash-chart-body" style="color:#8BA498; font-size:12px;">Memuat grafik...</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:20px; background:#082619; border:1px solid rgba(239,68,68,0.35); border-radius:12px; padding:16px;">
+            <div style="font-weight:700; color:#F87171; margin-bottom:8px;">⚠️ Peringatan Stok & Kedaluwarsa</div>
+            <div style="font-size:11px; color:#8BA498; margin-bottom:8px;">Barang kedaluwarsa <strong style="color:#F87171;">otomatis diblokir</strong> dan tidak dapat dijual / dikeluarkan dari sistem.</div>
+            <div id="dash-warning-list" style="display:flex; flex-direction:column; gap:6px; font-size:12px;"></div>
+          </div>
+
           <div class="dashboard-activity-grid">
-            <!-- Left: Produk Terbaru -->
             <div class="activity-card">
               <div class="activity-card-head">
                 <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4 8 4 8-4zm-8 6l-7-3.5V17l7 3.5 7-3.5V9.5L12 13z"/></svg>
@@ -234,12 +268,10 @@
               </div>
               <div class="activity-list" id="dash-recent-products-list"></div>
             </div>
-
-            <!-- Right: Pesanan Terbaru -->
             <div class="activity-card">
               <div class="activity-card-head">
                 <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
-                <span>Pesanan Terbaru</span>
+                <span>Rincian Total Pesanan</span>
               </div>
               <div class="activity-list" id="dash-recent-orders-list">
                 <div class="empty-state-text">Belum ada pesanan.</div>
@@ -398,21 +430,28 @@
         <section id="admin-view-produk" class="admin-view">
           <div class="admin-card">
             <div class="admin-card-header">
-              <span class="admin-card-title">Master Data Produk & Sarana Pertanian</span>
+              <span class="admin-card-title">Manajemen Produk</span>
               <div class="admin-card-actions">
                 <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddProductModal()">+ Tambah Produk Baru</button>
               </div>
             </div>
+            <div style="font-size:12px; color:#8BA498; padding:10px 20px 0 20px;">Barang yang sudah kedaluwarsa <strong style="color:#F87171;">otomatis diblokir</strong>. Kartu stok menampilkan jumlah masuk / keluar dan saldo akhir per produk.</div>
             <div class="table-responsive">
               <table class="admin-table">
                 <thead>
                   <tr>
-                    <th>Foto</th>
-                    <th>Nama Produk & Lokasi Rak</th>
+                    <th>Foto Produk</th>
+                    <th>Nama Produk</th>
+                    <th>Lokasi Rak</th>
                     <th>Kategori</th>
-                    <th>Harga & Satuan</th>
-                    <th>Stok Fisik</th>
-                    <th>Penjualan</th>
+                    <th>Harga</th>
+                    <th>Satuan</th>
+                    <th>Kode Produk</th>
+                    <th>Tgl. Kedaluwarsa</th>
+                    <th>Jumlah Stok</th>
+                    <th>Status Stok</th>
+                    <th>Kartu & Saldo Stok</th>
+                    <th>Batas Minimum</th>
                     <th>Aksi</th>
                   </tr>
                 </thead>
@@ -422,211 +461,284 @@
           </div>
         </section>
 
-        <!-- ==========================================
-             4. KATEGORI
-             ========================================== -->
-        <section id="admin-view-kategori" class="admin-view">
+        <section id="admin-view-barangmasuk" class="admin-view">
           <div class="admin-card">
             <div class="admin-card-header">
-              <span class="admin-card-title">Master Kategori Komoditas & Saprotan</span>
-              <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddKategoriModal()">+ Tambah Kategori</button>
+              <span class="admin-card-title">Barang Masuk</span>
+              <div class="admin-card-actions">
+                <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddBarangMasukModal()">+ Catat Barang Masuk</button>
+              </div>
+            </div>
+            <div style="font-size:12px; color:#8BA498; padding:10px 20px 0 20px;">Setiap transaksi otomatis memperbarui saldo dan mencatat tanggal, jumlah, serta keterangan.</div>
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Tanggal Datang</th>
+                    <th>Kode Barang & Nama</th>
+                    <th>Jumlah Masuk</th>
+                    <th>Satuan</th>
+                    <th>Harga Satuan</th>
+                    <th>Pemasok / Supplier</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-barangmasuk-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="admin-view-barangkeluar" class="admin-view">
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-title">Barang Keluar</span>
+              <div class="admin-card-actions">
+                <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddBarangKeluarModal()">+ Catat Barang Keluar</button>
+              </div>
             </div>
             <div class="table-responsive">
               <table class="admin-table">
                 <thead>
                   <tr>
-                    <th>ID Kategori</th>
-                    <th>Nama Kategori</th>
-                    <th>Keterangan / Deskripsi</th>
-                    <th>Jumlah Produk</th>
+                    <th>Tanggal Keluar</th>
+                    <th>Kode Barang</th>
+                    <th>Jumlah Keluar</th>
+                    <th>Harga</th>
+                    <th>Catatan</th>
                     <th>Aksi</th>
                   </tr>
                 </thead>
-                <tbody id="table-kategori-tbody"></tbody>
+                <tbody id="table-barangkeluar-tbody"></tbody>
               </table>
             </div>
           </div>
         </section>
 
         <!-- ==========================================
-             5. KONTROL STOK
+             STOCK CONTROL — gabungan Purchase Order & Stock Opname
+             (1 fitur, 2 sub-tab: Purchase Order dan Stock Opname)
              ========================================== -->
-        <section id="admin-view-stok" class="admin-view">
+        <section id="admin-view-stockcontrol" class="admin-view">
           <div class="admin-card">
-            <div class="admin-card-header">
-              <span class="admin-card-title">Status Stok Fisik Pergudangan TaniSM</span>
+            <div class="admin-card-header" style="flex-direction:column; align-items:stretch;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                <span class="admin-card-title">Stock Control</span>
+                <span style="font-size:12px; color:#8BA498;">Pengadaan PO ke supplier &amp; pemeriksaan stok gudang dalam 1 menu</span>
+              </div>
+              <div class="penjualan-tabs" role="tablist" aria-label="Sub-menu Stock Control">
+                <button type="button" class="penjualan-tab active" data-stockcontrol-tab="po" role="tab" aria-selected="true" onclick="AdminApp.setStockControlTab('po')">Purchase Order</button>
+                <button type="button" class="penjualan-tab" data-stockcontrol-tab="stockopname" role="tab" aria-selected="false" onclick="AdminApp.setStockControlTab('stockopname')">Stock Opname</button>
+              </div>
             </div>
-            <div class="table-responsive">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>ID SKU</th>
-                    <th>Nama Barang Pertanian</th>
-                    <th>Lokasi Rak / Gudang</th>
-                    <th>Stok Tersedia</th>
-                    <th>Batas Minimum</th>
-                    <th>Status Mutu</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="table-stok-tbody"></tbody>
-              </table>
+
+            <!-- SUB-TAB: PURCHASE ORDER -->
+            <div class="penjualan-panel active" data-stockcontrol-panel="po" role="tabpanel">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 20px 0 20px;">
+                <span style="font-size:12px; color:#8BA498;">Purchase order ke supplier — tidak langsung menambah stok sampai barang diterima.</span>
+                <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddPOModal()">＋ Buat PO</button>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Nomor PO</th>
+                      <th>Supplier</th>
+                      <th>Detail Barang</th>
+                      <th>Total</th>
+                      <th>Rencana Kirim</th>
+                      <th>Status PO</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-po-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- SUB-TAB: STOCK OPNAME -->
+            <div class="penjualan-panel" data-stockcontrol-panel="stockopname" role="tabpanel">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 20px 0 20px;">
+                <span style="font-size:12px; color:#8BA498;">Alur: petugas memilih barang → sistem menampilkan stok tercatat → hitung fisik di gudang → input stok fisik → sistem hitung selisih otomatis → admin menyetujui penyesuaian.</span>
+                <button class="btn btn-primary btn-sm" onclick="AdminApp.startOpname()">Mulai Stock Opname</button>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Nomor Dokumen Opname</th>
+                      <th>Nama Petugas</th>
+                      <th>Lokasi Gudang / Rak</th>
+                      <th>Keterangan Pemeriksaan</th>
+                      <th>Status</th>
+                      <th>Jumlah SKU</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-stockopname-tbody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
+        </section>
 
-          <!-- Stock Movement Logs -->
+          </div>
+        </section>
+
+        <!-- ==========================================
+             6. MANAJEMEN PENJUALAN — gabungan Pemesanan, Pembayaran & Pengiriman
+             (tab terpisah di dalam 1 fitur, filter sederhana)
+             ========================================== -->
+        <section id="admin-view-penjualan" class="admin-view">
           <div class="admin-card">
-            <div class="admin-card-header">
-              <span class="admin-card-title">Log Riwayat Mutasi Stok Masuk / Keluar (Audit Trail)</span>
+            <div class="admin-card-header" style="flex-direction:column; align-items:stretch;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                <span class="admin-card-title">Manajemen Penjualan</span>
+                <label style="font-size:12px; color:#A3BDB0; display:inline-flex; align-items:center; gap:8px;">
+                  Filter:
+                  <select id="penjualan-filter-select" class="form-select" style="width:auto;" onchange="AdminApp.setPenjualanFilter(this.value)">
+                    <option value="all">Semua Status</option>
+                    <option value="belum-lunas">Belum Lunas</option>
+                    <option value="lunas">Lunas</option>
+                    <option value="diproses">Diproses Gudang</option>
+                    <option value="dikirim">Dikirim</option>
+                    <option value="selesai">Selesai</option>
+                    <option value="menunggu">Menunggu</option>
+                  </select>
+                </label>
+              </div>
+              <div class="penjualan-tabs" role="tablist" aria-label="Sub-menu Manajemen Penjualan">
+                <button type="button" class="penjualan-tab active" data-penjualan-tab="pemesanan" role="tab" aria-selected="true" onclick="AdminApp.setPenjualanTab('pemesanan')">Pemesanan</button>
+                <button type="button" class="penjualan-tab" data-penjualan-tab="pembayaran" role="tab" aria-selected="false" onclick="AdminApp.setPenjualanTab('pembayaran')">Pembayaran</button>
+                <button type="button" class="penjualan-tab" data-penjualan-tab="pengiriman" role="tab" aria-selected="false" onclick="AdminApp.setPenjualanTab('pengiriman')">Pengiriman</button>
+              </div>
             </div>
-            <div class="table-responsive">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Waktu Catat</th>
-                    <th>Nama Barang</th>
-                    <th>Jenis Mutasi</th>
-                    <th>Kuantitas</th>
-                    <th>Sisa Saldo</th>
-                    <th>Keterangan / Referensi</th>
-                  </tr>
-                </thead>
-                <tbody id="table-stok-logs-tbody"></tbody>
-              </table>
+
+            <!-- SUB-TAB: PEMESANAN -->
+            <div class="penjualan-panel active" data-penjualan-panel="pemesanan" role="tabpanel">
+              <div style="padding:10px 20px 0 20px; font-size:12px; color:#8BA498;">Daftar pemesanan masuk petani.</div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>No. Pesanan</th>
+                      <th>Pemesan</th>
+                      <th>Waktu Pesan</th>
+                      <th>Total Biaya</th>
+                      <th>Status Bayar</th>
+                      <th>Status Gudang</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-pemesanan-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- SUB-TAB: PEMBAYARAN -->
+            <div class="penjualan-panel" data-penjualan-panel="pembayaran" role="tabpanel">
+              <div style="padding:10px 20px 0 20px; font-size:12px; color:#8BA498;">Verifikasi bukti transfer &amp; status rekening.</div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>No. Pesanan</th>
+                      <th>Nama Pembayar</th>
+                      <th>Metode Pembayaran</th>
+                      <th>Jumlah Tagihan</th>
+                      <th>Status Verifikasi</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-pembayaran-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- SUB-TAB: PENGIRIMAN -->
+            <div class="penjualan-panel" data-penjualan-panel="pengiriman" role="tabpanel">
+              <div style="padding:10px 20px 0 20px; font-size:12px; color:#8BA498;">Logistik, ekspedisi &amp; resi kargo.</div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>No. Pesanan</th>
+                      <th>Penerima</th>
+                      <th>Ekspedisi</th>
+                      <th>Nomor Resi / Surat Jalan</th>
+                      <th>Status Pengiriman</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-pengiriman-tbody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>
 
         <!-- ==========================================
-             6. PEMESANAN
+             9. PROMOSI & EDUKASI — gabungan Konten & Diskon/Kupon
+             (1 menu, 2 sub-tab: Promosi/Kupon dan Edukasi)
              ========================================== -->
-        <section id="admin-view-pemesanan" class="admin-view">
+        <section id="admin-view-promoedu" class="admin-view">
           <div class="admin-card">
-            <div class="admin-card-header">
-              <span class="admin-card-title">Daftar Pemesanan Masuk Petani</span>
+            <div class="admin-card-header" style="flex-direction:column; align-items:stretch;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+                <span class="admin-card-title">Promosi &amp; Edukasi</span>
+                <span style="font-size:12px; color:#8BA498;">Kupon subsidi pertanian &amp; artikel edukasi agronomi dalam 1 menu</span>
+              </div>
+              <div class="penjualan-tabs" role="tablist" aria-label="Sub-menu Promosi & Edukasi">
+                <button type="button" class="penjualan-tab active" data-promoedu-tab="promo" role="tab" aria-selected="true" onclick="AdminApp.setPromoEduTab('promo')">Promosi / Kupon</button>
+                <button type="button" class="penjualan-tab" data-promoedu-tab="edukasi" role="tab" aria-selected="false" onclick="AdminApp.setPromoEduTab('edukasi')">Edukasi</button>
+              </div>
             </div>
-            <div class="table-responsive">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>No. Pesanan</th>
-                    <th>Pemesan</th>
-                    <th>Waktu Pesan</th>
-                    <th>Total Biaya</th>
-                    <th>Status Bayar</th>
-                    <th>Status Gudang</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="table-pemesanan-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </section>
 
-        <!-- ==========================================
-             7. PEMBAYARAN
-             ========================================== -->
-        <section id="admin-view-pembayaran" class="admin-view">
-          <div class="admin-card">
-            <div class="admin-card-header">
-              <span class="admin-card-title">Verifikasi Bukti Transfer & Status Rekening</span>
+            <!-- SUB-TAB: PROMOSI / KUPON DISKON -->
+            <div class="penjualan-panel active" data-promoedu-panel="promo" role="tabpanel">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 20px 0 20px;">
+                <span style="font-size:12px; color:#8BA498;">Daftar kupon subsidi &amp; promosi musim tanam.</span>
+                <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddPromoModal()">+ Buat Kupon Baru</button>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Kode Kupon</th>
+                      <th>Nama Program Promo</th>
+                      <th>Besaran Diskon</th>
+                      <th>Min. Belanja</th>
+                      <th>Terpakai / Kuota</th>
+                      <th>Status</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-promo-tbody"></tbody>
+                </table>
+              </div>
             </div>
-            <div class="table-responsive">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>No. Pesanan</th>
-                    <th>Nama Pembayar</th>
-                    <th>Metode Pembayaran</th>
-                    <th>Jumlah Tagihan</th>
-                    <th>Status Verifikasi</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="table-pembayaran-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </section>
 
-        <!-- ==========================================
-             8. PENGIRIMAN
-             ========================================== -->
-        <section id="admin-view-pengiriman" class="admin-view">
-          <div class="admin-card">
-            <div class="admin-card-header">
-              <span class="admin-card-title">Manajemen Logistik, Ekspedisi & Resi Kargo</span>
-            </div>
-            <div class="table-responsive">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>No. Pesanan</th>
-                    <th>Penerima</th>
-                    <th>Ekspedisi</th>
-                    <th>Nomor Resi / Surat Jalan</th>
-                    <th>Status Pengiriman</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="table-pengiriman-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <!-- ==========================================
-             9. KONTEN & TIPS
-             ========================================== -->
-        <section id="admin-view-konten" class="admin-view">
-          <div class="admin-card">
-            <div class="admin-card-header">
-              <span class="admin-card-title">Manajemen Artikel Edukasi Agronomi & Tips Tani</span>
-              <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddTipModal()">+ Tulis Tips Baru</button>
-            </div>
-            <div class="table-responsive">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Judul Tips Pertanian</th>
-                    <th>Kategori</th>
-                    <th>Penulis / Agronomis</th>
-                    <th>Tanggal Terbit</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="table-konten-tips-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <!-- ==========================================
-             10. PROMO & KUPON
-             ========================================== -->
-        <section id="admin-view-promo" class="admin-view">
-          <div class="admin-card">
-            <div class="admin-card-header">
-              <span class="admin-card-title">Kupon Subsidi & Promosi Musim Tanam</span>
-              <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddPromoModal()">+ Buat Kupon Baru</button>
-            </div>
-            <div class="table-responsive">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Kode Kupon</th>
-                    <th>Nama Program Promo</th>
-                    <th>Besaran Diskon</th>
-                    <th>Min. Belanja</th>
-                    <th>Terpakai / Kuota</th>
-                    <th>Status</th>
-                    <th>Aksi</th>
-                  </tr>
-                </thead>
-                <tbody id="table-promo-tbody"></tbody>
-              </table>
+            <!-- SUB-TAB: EDUKASI (KONTEN & TIPS) -->
+            <div class="penjualan-panel" data-promoedu-panel="edukasi" role="tabpanel">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:10px 20px 0 20px;">
+                <span style="font-size:12px; color:#8BA498;">Manajemen artikel edukasi agronomi &amp; tips tani.</span>
+                <button class="btn btn-primary btn-sm" onclick="AdminApp.openAddTipModal()">+ Tulis Tips Baru</button>
+              </div>
+              <div class="table-responsive">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Judul Tips Pertanian</th>
+                      <th>Kategori</th>
+                      <th>Penulis / Agronomis</th>
+                      <th>Tanggal Terbit</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-konten-tips-tbody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>
@@ -640,8 +752,14 @@
               <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                 <label style="font-weight: 600; font-size: 13px; color: #A3BDB0;">Jenis Laporan:</label>
                 <select id="report-type-select" class="form-select" style="width: auto;" onchange="AdminApp.renderLaporan()">
-                  <option value="sales">Laporan Rekapitulasi Penjualan & Pendapatan</option>
-                  <option value="stock">Laporan Stock Opname Fisik & Valuasi Aset</option>
+                  <option value="stok">Laporan Stok Barang</option>
+                  <option value="masuk">Laporan Barang Masuk</option>
+                  <option value="keluar">Laporan Barang Keluar</option>
+                  <option value="pembelian">Laporan Pembelian</option>
+                  <option value="penjualan">Laporan Penjualan</option>
+                  <option value="opname">Laporan Stock Opname</option>
+                  <option value="pembayaran">Laporan Pembayaran</option>
+                  <option value="kedaluwarsa">Laporan Barang Kedaluwarsa</option>
                 </select>
 
                 <label style="font-weight: 600; font-size: 13px; margin-left: 10px; color: #A3BDB0;">Periode:</label>
@@ -693,12 +811,41 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
-            <label class="form-label">Kategori Komoditas:</label>
-            <select id="form-product-cat" class="form-select"></select>
+            <label class="form-label">Kode Produk:</label>
+            <input type="text" id="form-product-code" class="form-input" placeholder="Contoh: PUP001 / PRD-001">
           </div>
+          <div class="form-group">
+            <label class="form-label">Kategori:</label>
+            <select id="form-product-cat-name" class="form-select">
+              <option>Bibit & Benih</option>
+              <option>Pupuk Tanaman</option>
+              <option>Obat Hama & Penyakit</option>
+              <option>Alat & Mesin Tani</option>
+              <option>Media & Perlengkapan</option>
+              <option>Hasil Panen Segar</option>
+            </select>
+            <select id="form-product-cat" class="form-select" style="display:none;" aria-hidden="true"></select>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div class="form-group">
             <label class="form-label">Lokasi Rak / Palet Gudang:</label>
             <input type="text" id="form-product-shelf" class="form-input" placeholder="Contoh: Rak A-02">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tanggal Kedaluwarsa:</label>
+            <input type="date" id="form-product-expiry" class="form-input">
+            <span style="font-size:11px; color:#F87171;">Lewat tanggal ini sistem otomatis memblokir barang.</span>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Batas Minimum Stok:</label>
+            <input type="number" id="form-product-min-stock" class="form-input" min="0" value="20">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Jenis Satuan untuk Barang Masuk/Keluar:</label>
+            <input type="text" id="form-product-unit-top" class="form-input" placeholder="Kg / Sak / Botol / Unit" disabled>
           </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -1067,6 +1214,114 @@
           <button class="btn btn-outline-emerald" onclick="window.print()">Cetak Dokumen Surat Jalan</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Barang Masuk -->
+  <div id="modal-add-barangmasuk" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 560px;">
+      <div class="modal-header"><h3 class="modal-title">Catat Barang Masuk</h3><span class="modal-close">&times;</span></div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Tanggal Datang:</label><input type="datetime-local" id="form-bm-tanggal" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Kode Barang (Pilih Produk):</label><select id="form-bm-produk" class="form-select" onchange="var o=this.options[this.selectedIndex];document.getElementById('form-bm-harga').value=o.getAttribute('data-price')||'';"></select></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group"><label class="form-label">Jumlah Masuk:</label><input type="number" id="form-bm-jumlah" class="form-input" min="1"></div>
+          <div class="form-group"><label class="form-label">Harga Satuan (Rp):</label><input type="number" id="form-bm-harga" class="form-input" min="0"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Pemasok / Supplier:</label><input type="text" id="form-bm-supplier" class="form-input" placeholder="PT Petrokimia Gresik"></div>
+        <div style="font-size:11px; color:#8BA498;">Transaksi otomatis memperbarui saldo dan mencatat tanggal, jumlah, serta keterangan.</div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary btn-modal-cancel">Batal</button><button class="btn btn-primary" onclick="AdminApp.saveBarangMasukForm()">Simpan</button></div>
+    </div>
+  </div>
+
+  <!-- Modal: Barang Keluar -->
+  <div id="modal-add-barangkeluar" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 560px;">
+      <div class="modal-header"><h3 class="modal-title">Catat Barang Keluar</h3><span class="modal-close">&times;</span></div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Tanggal Keluar:</label><input type="datetime-local" id="form-bk-tanggal" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Kode Barang (Pilih Produk Non-Expired):</label><select id="form-bk-produk" class="form-select" onchange="var o=this.options[this.selectedIndex];document.getElementById('form-bk-harga').value=o.getAttribute('data-price')||'';"></select></div>
+        <div class="form-group"><label class="form-label">Jumlah Keluar:</label><input type="number" id="form-bk-jumlah" class="form-input" min="1"></div>
+        <div class="form-group"><label class="form-label">Harga (Rp):</label><input type="number" id="form-bk-harga" class="form-input" min="0"></div>
+        <div class="form-group"><label class="form-label">Catatan:</label><textarea id="form-bk-catatan" class="form-textarea" rows="2" placeholder="Keterangan pengeluaran barang"></textarea></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary btn-modal-cancel">Batal</button><button class="btn btn-primary" onclick="AdminApp.saveBarangKeluarForm()">Simpan</button></div>
+    </div>
+  </div>
+
+  <!-- Modal: Purchase Order -->
+  <div id="modal-add-po" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 760px;">
+      <div class="modal-header"><h3 class="modal-title">Buat Purchase Order Baru</h3><span class="modal-close">&times;</span></div>
+      <div class="modal-body">
+        <input type="hidden" id="form-po-id">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group"><label class="form-label">Nomor PO:</label><input type="text" class="form-input" disabled placeholder="Otomatis"></div>
+          <div class="form-group"><label class="form-label">Tanggal Pembuatan PO:</label><input type="date" id="form-po-tanggal" class="form-input"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Nama Supplier:</label><input type="text" id="form-po-supplier" class="form-input"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group"><label class="form-label">Alamat Supplier:</label><input type="text" id="form-po-alamat" class="form-input"></div>
+          <div class="form-group"><label class="form-label">No. Telepon Supplier:</label><input type="text" id="form-po-telepon" class="form-input"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Tanggal Pengiriman Direncanakan:</label><input type="date" id="form-po-kirim" class="form-input"></div>
+        <div style="font-weight:700; margin:12px 0 8px;">Detail Barang yang Dipesan</div>
+        <div style="display:grid; grid-template-columns: 1.6fr 0.7fr 0.6fr 0.8fr 0.8fr auto; gap:8px; font-size:11px; color:#8BA498; margin-bottom:4px;"><span>Barang</span><span>Jumlah</span><span>Satuan</span><span>Harga Satuan</span><span>Subtotal</span><span></span></div>
+        <div id="po-detail-rows"></div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="AdminApp.addPODetailRow()">+ Tambah Baris</button>
+        <div style="font-weight:700; margin:16px 0 8px;">Ringkasan Pembelian</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+          <div class="form-group"><label class="form-label">Diskon (Rp):</label><input type="number" id="form-po-diskon" class="form-input" value="0" oninput="AdminApp.recalcPO()"></div>
+          <div class="form-group"><label class="form-label">Pajak (Rp):</label><input type="number" id="form-po-pajak" class="form-input" value="0" oninput="AdminApp.recalcPO()"></div>
+          <div class="form-group"><label class="form-label">Biaya Pengiriman (Rp):</label><input type="number" id="form-po-ongkir" class="form-input" value="0" oninput="AdminApp.recalcPO()"></div>
+        </div>
+        <div id="po-summary-box" style="padding:12px; border:1px solid rgba(16,185,129,0.3); border-radius:8px;"></div>
+        <div style="font-weight:700; margin:16px 0 8px;">Status PO</div>
+        <div style="font-size:12px; color:#8BA498;">Draft / Menunggu Persetujuan / Disetujui / Dikirim Supplier / Diterima Sebagian / Selesai / Dibatalkan</div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary btn-modal-cancel">Batal</button><button class="btn btn-secondary" onclick="AdminApp.savePOForm('Draft')">Simpan Draft</button><button class="btn btn-primary" onclick="AdminApp.savePOForm('Menunggu Persetujuan')">Ajukan PO</button></div>
+    </div>
+  </div>
+
+  <!-- Modal: PO Detail -->
+  <div id="modal-po-detail" class="modal-overlay">
+    <div class="modal-box" style="max-width: 820px;">
+      <div class="modal-header no-print"><h3 class="modal-title">Detail Purchase Order</h3><span class="modal-close">&times;</span></div>
+      <div class="modal-body" id="modal-po-detail-content"></div>
+      <div class="modal-footer no-print"><button class="btn btn-secondary btn-modal-cancel">Tutup</button><button class="btn btn-primary" onclick="window.print()">Cetak PO</button></div>
+    </div>
+  </div>
+
+  <!-- Modal: Stock Opname -->
+  <div id="modal-add-opname" class="modal-overlay no-print">
+    <div class="modal-box" style="max-width: 760px;">
+      <div class="modal-header"><h3 class="modal-title">Mulai Stock Opname</h3><span class="modal-close">&times;</span></div>
+      <div class="modal-body">
+        <input type="hidden" id="form-op-id">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group"><label class="form-label">Nomor Dokumen Opname:</label><input type="text" class="form-input" disabled placeholder="Otomatis"></div>
+          <div class="form-group"><label class="form-label">Tanggal Pemeriksaan:</label><input type="date" id="form-op-tanggal" class="form-input"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Nama Petugas:</label><input type="text" id="form-op-petugas" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Lokasi Gudang atau Rak:</label><input type="text" id="form-op-lokasi" class="form-input" placeholder="Gudang Pusat - Rak A/B"></div>
+        <div class="form-group"><label class="form-label">Keterangan Pemeriksaan:</label><textarea id="form-op-keterangan" class="form-textarea" rows="2"></textarea></div>
+        <div style="font-weight:700; margin:12px 0 8px;">Tabel Pemeriksaan Stok</div>
+        <div style="display:grid; grid-template-columns: 1.6fr 0.7fr 0.7fr 0.7fr 1fr auto; gap:8px; font-size:11px; color:#8BA498; margin-bottom:4px;"><span>Barang</span><span>Stok Sistem</span><span>Stok Fisik</span><span>Selisih</span><span>Hasil</span><span></span></div>
+        <div id="opname-rows"></div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="AdminApp.addOpnameRow()">+ Tambah Baris</button>
+        <div style="font-size:12px; color:#8BA498; margin-top:12px;">Hasil: <strong>Sesuai</strong> (fisik = sistem) | <strong>Selisih kurang</strong> (fisik lebih sedikit) | <strong>Selisih lebih</strong> (fisik lebih banyak). Selisih dihitung otomatis.</div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary btn-modal-cancel">Batal</button><button class="btn btn-secondary" onclick="AdminApp.saveOpname('Diajukan')">Simpan Pemeriksaan</button><button class="btn btn-primary" onclick="AdminApp.saveOpname('Diajukan')">Ajukan Penyesuaian Stok</button></div>
+    </div>
+  </div>
+
+  <!-- Modal: Stock Opname Detail -->
+  <div id="modal-opname-detail" class="modal-overlay">
+    <div class="modal-box" style="max-width: 820px;">
+      <div class="modal-header no-print"><h3 class="modal-title">Laporan Stock Opname</h3><span class="modal-close">&times;</span></div>
+      <div class="modal-body" id="modal-opname-detail-content"></div>
+      <div class="modal-footer no-print"><button class="btn btn-secondary btn-modal-cancel">Tutup</button><button class="btn btn-primary" onclick="window.print()">Cetak Laporan</button></div>
     </div>
   </div>
 
